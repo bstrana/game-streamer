@@ -16,7 +16,6 @@
   "maxFailureWaitSeconds": 900,
   "minimumQuickLoginWaitSeconds": 60,
   "maxDeltaTimeSeconds": 43200,
-
   "accessTokenLifespan": 300,
   "accessTokenLifespanForImplicitFlow": 900,
   "ssoSessionIdleTimeout": 1800,
@@ -25,8 +24,25 @@
   "accessCodeLifespan": 60,
   "accessCodeLifespanUserAction": 300,
   "accessCodeLifespanLogin": 1800,
-
   "defaultSignatureAlgorithm": "RS256",
+  "internationalizationEnabled": false,
+  "supportedLocales": ["en"],
+  "defaultLocale": "en",
+  "loginTheme": "keycloak",
+  "accountTheme": "keycloak.v2",
+  "adminTheme": "keycloak.v2",
+  "emailTheme": "keycloak",
+  "smtpServer": {},
+
+  "browserSecurityHeaders": {
+    "contentSecurityPolicyReportOnly": "",
+    "xContentTypeOptions": "nosniff",
+    "xRobotsTag": "none",
+    "xFrameOptions": "SAMEORIGIN",
+    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
+    "xXSSProtection": "1; mode=block",
+    "strictTransportSecurity": "max-age=31536000; includeSubDomains"
+  },
 
   "roles": {
     "realm": [
@@ -45,13 +61,20 @@
         },
         "clientRole": false
       }
-    ],
-    "client": {
-      "game-streamer-app": []
-    }
+    ]
   },
 
-  "defaultRoles": ["streamer"],
+  "defaultRole": {
+    "name": "default-roles-game-streamer",
+    "description": "${role_default-roles}",
+    "composite": true,
+    "clientRole": false,
+    "containerId": "game-streamer",
+    "composites": {
+      "realm": ["streamer"],
+      "client": {}
+    }
+  },
 
   "clients": [
     {
@@ -147,59 +170,6 @@
     }
   ],
 
-  "clientScopes": [
-    {
-      "name": "profile",
-      "description": "OpenID Connect built-in scope: profile",
-      "protocol": "openid-connect",
-      "attributes": {
-        "include.in.token.scope": "true",
-        "display.on.consent.screen": "true"
-      }
-    },
-    {
-      "name": "email",
-      "description": "OpenID Connect built-in scope: email",
-      "protocol": "openid-connect",
-      "attributes": {
-        "include.in.token.scope": "true",
-        "display.on.consent.screen": "true"
-      }
-    },
-    {
-      "name": "roles",
-      "description": "OpenID Connect scope for realm roles",
-      "protocol": "openid-connect",
-      "attributes": {
-        "include.in.token.scope": "false",
-        "display.on.consent.screen": "true"
-      }
-    }
-  ],
-
-  "defaultDefaultClientScopes": ["profile", "email", "roles"],
-  "defaultOptionalClientScopes": [],
-
-  "browserSecurityHeaders": {
-    "contentSecurityPolicyReportOnly": "",
-    "xContentTypeOptions": "nosniff",
-    "xRobotsTag": "none",
-    "xFrameOptions": "SAMEORIGIN",
-    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
-    "xXSSProtection": "1; mode=block",
-    "strictTransportSecurity": "max-age=31536000; includeSubDomains"
-  },
-
-  "smtpServer": {},
-
-  "loginTheme": "keycloak",
-  "accountTheme": "keycloak.v2",
-  "adminTheme": "keycloak.v2",
-  "emailTheme": "keycloak",
-  "internationalizationEnabled": false,
-  "supportedLocales": ["en"],
-  "defaultLocale": "en",
-
   "users": [
     {
       "username": "admin",
@@ -215,8 +185,7 @@
           "temporary": true
         }
       ],
-      "realmRoles": ["admin"],
-      "comment": "CHANGE THIS PASSWORD on first login. Remove this user entry before importing into production."
+      "realmRoles": ["admin"]
     }
   ]
 }
