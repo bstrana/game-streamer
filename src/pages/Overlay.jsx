@@ -47,7 +47,7 @@ export default function Overlay() {
       )}
       {error && (
         <div className="overlay-error-banner">
-          ⚠ Live data unavailable — showing scheduled info
+          ⚠ {error}
         </div>
       )}
       <Scoreboard
