@@ -44,11 +44,10 @@ function normalise(raw) {
   const r3 = Boolean(Number(sit.runner3 ?? 0));
 
   // ── Players (situation) ──────────────────────────────────────────────────
-  const batterName  = sit.nbatter  ?? sit.batter   ?? '';
-  const batterNum   = sit.batterid ?? '';
-  const batterAvg   = sit.batting  ?? sit.avg      ?? '';
-  const pitcherName = sit.pitcher  ?? '';
-  const pitcherNum  = sit.pitcherid ?? '';
+  const batterName    = sit.nbatter  ?? sit.batter  ?? '';
+  const batterAvg     = sit.batting  ?? sit.avg     ?? '';
+  const pitcherName   = sit.pitcher  ?? '';
+  const pitcherPitches = sit.pitches != null ? String(sit.pitches) : '';
 
   // ── Inning-by-inning (linescore.awayruns / homeruns) ─────────────────────
   // Arrays are 1-indexed: index 0 is null/unused, index N = inning N.
@@ -74,8 +73,8 @@ function normalise(raw) {
     status, inning, isTop,
     balls, strikes, outs,
     r1, r2, r3,
-    batterName, batterNum, batterAvg,
-    pitcherName, pitcherNum,
+    batterName, batterAvg,
+    pitcherName, pitcherPitches,
     innScore,
   };
 }

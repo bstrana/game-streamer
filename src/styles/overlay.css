@@ -1,17 +1,17 @@
 /**
  * Overlay styles — optimised for OBS browser source (1920×1080)
- * Transparent background, dark scoreboard panel.
+ * White background, dark scoreboard panel.
  */
 
 .overlay-root {
   position: fixed;
-  top: 32px;
-  left: 32px;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   pointer-events: none;
-  background: transparent;
+  background: #fff;
+  padding: 32px;
 }
 
 .overlay-loading {
@@ -214,7 +214,7 @@
   border: 1.5px solid #334155;
 }
 .dot-empty  { background: #1e293b; }
-.dot-out    { background: #ef4444; border-color: #dc2626; }
+.dot-out    { background: #fbbf24; border-color: #f59e0b; }
 
 /* B · S numeric display */
 .sb-bs-nums {
@@ -227,7 +227,7 @@
   line-height: 1;
 }
 .ball-val   { color: #22c55e; }
-.strike-val { color: #f59e0b; }
+.strike-val { color: #ef4444; }
 .sb-bs-sep  { color: #475569; font-weight: 400; font-size: 18px; }
 
 /* Outs dots row */
@@ -300,11 +300,16 @@
   text-transform: uppercase;
   letter-spacing: .02em;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.player-avg {
+.player-stat {
   font-size: 11px;
   font-weight: 700;
   color: #94a3b8;
   font-variant-numeric: tabular-nums;
   font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  margin-left: auto;
 }
