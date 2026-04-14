@@ -1,0 +1,307 @@
+/**
+ * Overlay styles — optimised for OBS browser source
+ * Transparent background, dark scoreboard panel.
+ */
+
+/* OBS browser source is 1920×1080 by default.
+   The overlay sits at the bottom of the frame. */
+.overlay-root {
+  position: fixed;
+  bottom: 32px;
+  left: 32px;
+  right: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+  /* Transparent so the game stream shows through */
+  background: transparent;
+}
+
+.overlay-loading {
+  font-size: 12px;
+  color: rgba(255,255,255,.5);
+  padding: 4px 10px;
+  background: rgba(0,0,0,.6);
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.overlay-error-banner {
+  font-size: 12px;
+  color: #fbbf24;
+  padding: 4px 10px;
+  background: rgba(0,0,0,.7);
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.overlay-error {
+  color: rgba(255,255,255,.6);
+  font-size: 14px;
+  padding: 8px 16px;
+  background: rgba(0,0,0,.7);
+  border-radius: 8px;
+}
+
+/* ── Scoreboard panel ──────────────────────────────────────────────────── */
+.scoreboard {
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 540px;
+  max-width: 720px;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: #f1f5f9;
+  box-shadow: 0 8px 40px rgba(0,0,0,.7);
+}
+
+/* Pre-game layout */
+.scoreboard-pregame .sb-middle {
+  text-align: center;
+  padding: 4px 20px;
+}
+.sb-game-time  { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+.sb-location   { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+/* Top bar */
+.sb-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  background: rgba(255,255,255,.05);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sb-competition {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #94a3b8;
+}
+.sb-status {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.status-0 { background: #334155; color: #94a3b8; }
+.status-1 { background: #dc2626; color: #fff; animation: pulse-bg 2s ease-in-out infinite; }
+.status-2 { background: #1d4ed8; color: #fff; }
+.status-3 { background: #78350f; color: #fcd34d; }
+
+@keyframes pulse-bg {
+  0%, 100% { background: #dc2626; }
+  50%       { background: #b91c1c; }
+}
+
+/* Teams + score */
+.sb-teams-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 16px;
+}
+
+.sb-team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.sb-team.away { align-items: flex-start; }
+.sb-team.home { align-items: flex-end; }
+
+.sb-team-abbr {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.sb-team-name {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.sb-score {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.04em;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+}
+
+.sb-inning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sb-half {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.sb-inning-num {
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sb-inning-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.sb-final-label {
+  font-size: 18px;
+  font-weight: 900;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Inning score table */
+.inning-table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 0 16px;
+}
+.inning-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.inning-table th,
+.inning-table td {
+  text-align: center;
+  padding: 6px 8px;
+  color: #94a3b8;
+  min-width: 24px;
+}
+.inning-table thead th {
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.inn-team-col {
+  text-align: left !important;
+  font-weight: 700;
+  color: #e2e8f0 !important;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.inn-current {
+  color: #f1f5f9 !important;
+  background: rgba(59,130,246,.2);
+  border-radius: 3px;
+}
+.inn-total {
+  font-weight: 900 !important;
+  color: #f1f5f9 !important;
+  border-left: 1px solid rgba(255,255,255,.1);
+}
+
+/* Game state row: count + diamond + players */
+.sb-game-state {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.2);
+}
+
+/* BSO count */
+.sb-count-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sb-count-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.count-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  width: 12px;
+}
+.count-dots { display: flex; gap: 5px; }
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid #334155;
+}
+.dot-empty  { background: #1e293b; }
+.dot-ball   { background: #22c55e; border-color: #16a34a; }
+.dot-strike { background: #f59e0b; border-color: #d97706; }
+.dot-out    { background: #ef4444; border-color: #dc2626; }
+
+/* Diamond */
+.sb-diamond {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Players */
+.sb-players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.sb-player {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.player-role {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #475569;
+  font-weight: 700;
+  min-width: 44px;
+}
+.player-num {
+  font-size: 11px;
+  color: #60a5fa;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 24px;
+}
+.player-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
