@@ -3,74 +3,56 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 const POLL_INTERVAL = 5_000; // 5 seconds
 
 /**
- * Normalises the raw WBSC play123.json payload into a consistent shape,
- * handling multiple possible field-name conventions used across WBSC API versions.
+ * Normalises a WBSC play{id}.json payload.
+ * Game state comes from the "situation" key; scores from the "linescore" key.
  */
 function normalise(raw) {
   if (!raw || typeof raw !== 'object') return null;
 
-  // ── Teams ────────────────────────────────────────────────────────────────
-  const awayAbbr =
-    raw.team_away?.abbr ?? raw.team_away?.name ?? raw.team_away ?? raw.ateam ?? '';
-  const homeAbbr =
-    raw.team_home?.abbr ?? raw.team_home?.name ?? raw.team_home ?? raw.hteam ?? '';
+  const sit  = raw.situation  ?? {};
+  const ls   = raw.linescore  ?? {};
+
+  // ── Teams (top-level) ────────────────────────────────────────────────────
+  const awayAbbr = raw.eventaway ?? raw.team_away?.abbr ?? raw.team_away?.name ?? raw.team_away ?? raw.ateam ?? '';
+  const homeAbbr = raw.eventhome ?? raw.team_home?.abbr ?? raw.team_home?.name ?? raw.team_home ?? raw.hteam ?? '';
   const awayFull = raw.team_away?.fullname ?? raw.team_away_full ?? awayAbbr;
   const homeFull = raw.team_home?.fullname ?? raw.team_home_full ?? homeAbbr;
 
-  // ── Score ────────────────────────────────────────────────────────────────
-  const scoreAway =
-    raw.score?.away ?? raw.score_away ?? raw.ascore ??
-    raw.linescore?.awaytotals?.R ?? 0;
-  const scoreHome =
-    raw.score?.home ?? raw.score_home ?? raw.hscore ??
-    raw.linescore?.hometotals?.R ?? 0;
+  // ── Scores (linescore.awaytotals / hometotals) ───────────────────────────
+  const scoreAway = Number(ls.awaytotals?.R ?? 0);
+  const scoreHome = Number(ls.hometotals?.R ?? 0);
 
-  const sit = raw.situation ?? {};
+  // ── Game status (top-level; not present in situation) ────────────────────
+  // 0 = pre-game, 1 = in progress, 2 = final, 3 = postponed
+  const status = Number(raw.gamestatus ?? raw.status ?? raw.game_status ?? 0);
 
-  // ── Game state ───────────────────────────────────────────────────────────
-  const status =
-    raw.gamestatus ?? raw.status ?? raw.game_status ?? 0;
-  // 0 = scheduled/pre-game, 1 = in progress, 2 = final, 3 = postponed
-
-  // currentinning e.g. "BOT 5" or "TOP 3"
+  // ── Inning + half (situation.currentinning e.g. "BOT 5" / "TOP 3") ──────
   const currentInningStr = sit.currentinning ?? '';
-  const [halfStr, innFromStr] = currentInningStr.split(' ');
-  const inning =
-    raw.period ?? raw.inning ?? raw.inn ??
-    (innFromStr ? Number(innFromStr) : undefined) ??
-    (Math.floor(Number(sit.inning)) || 1);
-  const isTop =
-    raw.topbot === 'T' || raw.topbot === 1 ||
-    raw.top_bot === 'T' || raw.top_bot === 1 ||
-    raw.topbot === 'Top' ||
-    (halfStr ? halfStr.toUpperCase() === 'TOP' : false);
+  const [halfStr, innStr] = currentInningStr.split(' ');
+  const inning = innStr ? Number(innStr) : (Math.floor(Number(sit.inning)) || 1);
+  const isTop  = halfStr ? halfStr.toUpperCase() === 'TOP' : false;
 
-  // ── Count ────────────────────────────────────────────────────────────────
-  const balls   = Number(raw.ball   ?? raw.balls   ?? sit.balls   ?? 0);
-  const strikes = Number(raw.strike ?? raw.strikes ?? sit.strikes ?? 0);
-  const outs    = Number(raw.out    ?? raw.outs    ?? sit.outs    ?? 0);
+  // ── Count (situation) ────────────────────────────────────────────────────
+  const balls   = Number(sit.balls   ?? 0);
+  const strikes = Number(sit.strikes ?? 0);
+  const outs    = Number(sit.outs    ?? 0);
 
-  // ── Runners (1 = occupied, 0 = empty) ───────────────────────────────────
-  const r1 = Boolean(Number(raw.r1 ?? sit.runner1 ?? 0));
-  const r2 = Boolean(Number(raw.r2 ?? sit.runner2 ?? 0));
-  const r3 = Boolean(Number(raw.r3 ?? sit.runner3 ?? 0));
+  // ── Runners (situation.runner1/2/3) ──────────────────────────────────────
+  const r1 = Boolean(Number(sit.runner1 ?? 0));
+  const r2 = Boolean(Number(sit.runner2 ?? 0));
+  const r3 = Boolean(Number(sit.runner3 ?? 0));
 
-  // ── Players ─────────────────────────────────────────────────────────────
-  const pitcherName =
-    raw.pitcher?.name ?? raw.pitcher_name ?? sit.pitcher ?? raw.pitcher ?? '';
-  const pitcherNum =
-    raw.pitcher?.num ?? raw.pitcher_num ?? sit.pitcherid ?? '';
-  const batterName =
-    raw.batter?.name ?? raw.batter_name ?? sit.batter ?? raw.batter ?? '';
-  const batterNum =
-    raw.batter?.num ?? raw.batter_num ?? sit.batterid ?? '';
+  // ── Players (situation) ──────────────────────────────────────────────────
+  const batterName  = sit.batter   ?? '';
+  const batterNum   = sit.batterid ?? '';
+  const pitcherName = sit.pitcher  ?? '';
+  const pitcherNum  = sit.pitcherid ?? '';
 
-  // ── Inning-by-inning scores ──────────────────────────────────────────────
-  // Prefer the linescore.awayruns/homeruns arrays (index 0 = unused/null,
-  // index N = inning N).  Fall back to the older array-of-objects formats.
-  let innScore = [];
-  const awayRuns = raw.linescore?.awayruns;
-  const homeRuns = raw.linescore?.homeruns;
+  // ── Inning-by-inning (linescore.awayruns / homeruns) ─────────────────────
+  // Arrays are 1-indexed: index 0 is null/unused, index N = inning N.
+  const innScore = [];
+  const awayRuns = ls.awayruns;
+  const homeRuns = ls.homeruns;
   if (Array.isArray(awayRuns) && awayRuns.length > 1) {
     const len = Math.max(awayRuns.length, Array.isArray(homeRuns) ? homeRuns.length : 0);
     for (let i = 1; i < len; i++) {
@@ -82,37 +64,16 @@ function normalise(raw) {
         home: h === null || h === undefined ? '-' : h,
       });
     }
-  } else {
-    const innScoreRaw = raw.innscore ?? raw.inn_score ?? raw.innings ?? [];
-    innScore = Array.isArray(innScoreRaw)
-      ? innScoreRaw.map((i) => ({
-          inning: i.inning ?? i.inn ?? i.period ?? 0,
-          away:   i.away  ?? i.ascore ?? i.away_r  ?? '-',
-          home:   i.home  ?? i.hscore ?? i.home_r  ?? '-',
-        }))
-      : [];
   }
 
   return {
-    awayAbbr,
-    homeAbbr,
-    awayFull,
-    homeFull,
-    scoreAway: Number(scoreAway),
-    scoreHome: Number(scoreHome),
-    status: Number(status),
-    inning: Number(inning),
-    isTop,
-    balls,
-    strikes,
-    outs,
-    r1,
-    r2,
-    r3,
-    pitcherName,
-    pitcherNum,
-    batterName,
-    batterNum,
+    awayAbbr, homeAbbr, awayFull, homeFull,
+    scoreAway, scoreHome,
+    status, inning, isTop,
+    balls, strikes, outs,
+    r1, r2, r3,
+    batterName, batterNum,
+    pitcherName, pitcherNum,
     innScore,
   };
 }
