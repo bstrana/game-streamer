@@ -76,8 +76,7 @@
 
 .sb-row-divider {
   height: 1px;
-  background: rgba(255,255,255,.08);
-  margin: 0 10px;
+  background: rgba(0,0,0,.25);
 }
 
 .sb-team-info {
@@ -93,13 +92,11 @@
   line-height: 1;
   text-transform: uppercase;
   color: #fff;
-  padding: 3px 7px;
-  border-radius: 4px;
 }
 
 .sb-city {
   font-size: 11px;
-  color: #94a3b8;
+  color: rgba(255,255,255,.7);
   font-weight: 500;
   letter-spacing: .02em;
 }
