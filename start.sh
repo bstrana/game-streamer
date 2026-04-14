@@ -29,10 +29,14 @@ fi
 
 if [ -f /app/data/config.env ]; then
   echo "[start.sh] Loading config from /app/data/config.env"
+  # Strip carriage returns so CRLF files (Windows editors) don't break JS output
+  _cfg=$(mktemp)
+  sed 's/\r//' /app/data/config.env > "$_cfg"
   set -a
   # shellcheck disable=SC1091
-  . /app/data/config.env
+  . "$_cfg"
   set +a
+  rm -f "$_cfg"
 fi
 
 # ── Runtime config (read by the SPA via window.__APP_CONFIG__) ────────────
