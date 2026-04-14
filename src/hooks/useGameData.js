@@ -19,9 +19,11 @@ function normalise(raw) {
 
   // ── Score ────────────────────────────────────────────────────────────────
   const scoreAway =
-    raw.score?.away ?? raw.score_away ?? raw.ascore ?? 0;
+    raw.score?.away ?? raw.score_away ?? raw.ascore ??
+    raw.linescore?.awaytotals?.R ?? 0;
   const scoreHome =
-    raw.score?.home ?? raw.score_home ?? raw.hscore ?? 0;
+    raw.score?.home ?? raw.score_home ?? raw.hscore ??
+    raw.linescore?.hometotals?.R ?? 0;
 
   // ── Game state ───────────────────────────────────────────────────────────
   const status =
@@ -59,15 +61,32 @@ function normalise(raw) {
     raw.batter?.num ?? raw.batter_num ?? '';
 
   // ── Inning-by-inning scores ──────────────────────────────────────────────
-  const innScoreRaw =
-    raw.innscore ?? raw.inn_score ?? raw.innings ?? [];
-  const innScore = Array.isArray(innScoreRaw)
-    ? innScoreRaw.map((i) => ({
-        inning: i.inning ?? i.inn ?? i.period ?? 0,
-        away:   i.away  ?? i.ascore ?? i.away_r  ?? '-',
-        home:   i.home  ?? i.hscore ?? i.home_r  ?? '-',
-      }))
-    : [];
+  // Prefer the linescore.awayruns/homeruns arrays (index 0 = unused/null,
+  // index N = inning N).  Fall back to the older array-of-objects formats.
+  let innScore = [];
+  const awayRuns = raw.linescore?.awayruns;
+  const homeRuns = raw.linescore?.homeruns;
+  if (Array.isArray(awayRuns) && awayRuns.length > 1) {
+    const len = Math.max(awayRuns.length, Array.isArray(homeRuns) ? homeRuns.length : 0);
+    for (let i = 1; i < len; i++) {
+      const a = awayRuns[i];
+      const h = Array.isArray(homeRuns) ? homeRuns[i] : undefined;
+      innScore.push({
+        inning: i,
+        away: a === null || a === undefined ? '-' : a,
+        home: h === null || h === undefined ? '-' : h,
+      });
+    }
+  } else {
+    const innScoreRaw = raw.innscore ?? raw.inn_score ?? raw.innings ?? [];
+    innScore = Array.isArray(innScoreRaw)
+      ? innScoreRaw.map((i) => ({
+          inning: i.inning ?? i.inn ?? i.period ?? 0,
+          away:   i.away  ?? i.ascore ?? i.away_r  ?? '-',
+          home:   i.home  ?? i.hscore ?? i.home_r  ?? '-',
+        }))
+      : [];
+  }
 
   return {
     awayAbbr,
