@@ -20,9 +20,6 @@
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
         "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": [
-          "https://bstrana.sirv.com/ybc/ybc-logo.png"
-        ],
         "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
         "changelog": "Initial release. Manage baseball matches and generate live scoreboard overlays for OBS browser source, powered by WBSC live game data.",
         "packagerName": "bstrana",
