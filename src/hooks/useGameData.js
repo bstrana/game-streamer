@@ -102,7 +102,7 @@ export function useGameData(gameId) {
 
   const fetchData = useCallback(async () => {
     if (!gameId) return;
-    const url = `https://game.wbsc.org/gamedata/${gameId}/play123.json`;
+    const url = `/gamedata/${gameId}/play123.json`;
     try {
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
