@@ -38,7 +38,7 @@ function normalise(raw) {
   const inning =
     raw.period ?? raw.inning ?? raw.inn ??
     (innFromStr ? Number(innFromStr) : undefined) ??
-    Math.floor(Number(sit.inning)) || 1;
+    (Math.floor(Number(sit.inning)) || 1);
   const isTop =
     raw.topbot === 'T' || raw.topbot === 1 ||
     raw.top_bot === 'T' || raw.top_bot === 1 ||
