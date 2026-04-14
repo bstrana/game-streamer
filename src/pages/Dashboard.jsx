@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { getMatches, deleteMatch } from '../stores/matchStore';
 
-const BASE_URL = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
+const runtimeCfg = window.__APP_CONFIG__ || {};
+const BASE_URL = runtimeCfg.appBaseUrl || import.meta.env.VITE_APP_BASE_URL || window.location.origin;
 
 function formatDateTime(iso) {
   if (!iso) return '—';
