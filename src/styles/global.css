@@ -132,6 +132,29 @@ a:hover { text-decoration: underline; }
   line-height: 1.4;
 }
 
+/* ── Color picker ──────────────────────────────────────────────────────── */
+.form-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.form-input-color {
+  width: 44px;
+  height: 36px;
+  padding: 2px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.form-input-color:focus { outline: none; border-color: var(--accent); }
+.color-hex-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
 /* ── Loading screen ────────────────────────────────────────────────────── */
 .loading-screen {
   display: flex;

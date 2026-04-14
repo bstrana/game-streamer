@@ -1,36 +1,47 @@
 import DiamondDisplay from './DiamondDisplay';
 
 export default function Scoreboard({ gameData, match }) {
-  /* ── Pre-game ───────────────────────────────────────────────────────── */
+  const primaryColor = match.primaryColor || '#c0392b';
+
+  /* ── Pre-game (no live data) ────────────────────────────────────────── */
   if (!gameData) {
     return (
       <div className="scoreboard">
-        <div className="sb-teams">
-          <div className="sb-row">
-            <div className="sb-team-info">
-              <span className="sb-abbr">{match.awayTeam || 'Away'}</span>
+        <div className="sb-main">
+          <div className="sb-teams">
+            <div className="sb-row">
+              <div className="sb-team-info">
+                <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>
+                  {match.awayTeam || 'Away'}
+                </span>
+              </div>
+              <div className="sb-score">—</div>
             </div>
-            <div className="sb-score">—</div>
+            <div className="sb-row-divider" />
+            <div className="sb-row">
+              <div className="sb-team-info">
+                <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>
+                  {match.homeTeam || 'Home'}
+                </span>
+              </div>
+              <div className="sb-score">—</div>
+            </div>
           </div>
-          <div className="sb-row-divider" />
-          <div className="sb-row">
-            <div className="sb-team-info">
-              <span className="sb-abbr">{match.homeTeam || 'Home'}</span>
+          <div className="sb-col-divider" />
+          <div className="sb-side">
+            <div className="sb-scheduled-label">SCH</div>
+            {match.time && !isNaN(new Date(match.time).getTime()) && (
+              <div className="sb-scheduled-time">
+                {new Intl.DateTimeFormat(undefined, {
+                  month: 'short', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                }).format(new Date(match.time))}
+              </div>
+            )}
+            <div className="sb-side-diamond">
+              <DiamondDisplay r1={false} r2={false} r3={false} />
             </div>
-            <div className="sb-score">—</div>
           </div>
-        </div>
-        <div className="sb-col-divider" />
-        <div className="sb-side">
-          <div className="sb-scheduled-label">SCH</div>
-          {match.time && !isNaN(new Date(match.time).getTime()) && (
-            <div className="sb-scheduled-time">
-              {new Intl.DateTimeFormat(undefined, {
-                month: 'short', day: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              }).format(new Date(match.time))}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -49,6 +60,7 @@ export default function Scoreboard({ gameData, match }) {
 
   const isFinal = status === 2;
   const isLive  = status === 1;
+  const hasPlayers = isLive && (batterName || pitcherName);
 
   return (
     <div className="scoreboard">
@@ -58,7 +70,7 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-teams">
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr">{awayAbbr}</span>
+              <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>{awayAbbr}</span>
               {(awayFull && awayFull !== awayAbbr) && (
                 <span className="sb-city">{awayFull}</span>
               )}
@@ -70,7 +82,7 @@ export default function Scoreboard({ gameData, match }) {
 
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr">{homeAbbr}</span>
+              <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>{homeAbbr}</span>
               {(homeFull && homeFull !== homeAbbr) && (
                 <span className="sb-city">{homeFull}</span>
               )}
@@ -79,7 +91,7 @@ export default function Scoreboard({ gameData, match }) {
           </div>
         </div>
 
-        {/* ── Right: status + inning + count ───────────────────────── */}
+        {/* ── Right: status + inning + count + diamond ─────────────── */}
         <div className="sb-col-divider" />
         <div className="sb-side">
 
@@ -91,7 +103,6 @@ export default function Scoreboard({ gameData, match }) {
             </div>
           )}
           {isFinal && <div className="sb-final-text">FINAL</div>}
-          {!isLive && !isFinal && <div className="sb-pre-text">PRE</div>}
 
           {/* Inning */}
           <div className="sb-inning-row">
@@ -113,15 +124,17 @@ export default function Scoreboard({ gameData, match }) {
             ))}
           </div>
 
+          {/* Base runners diamond */}
+          <div className="sb-side-diamond">
+            <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+          </div>
+
         </div>
       </div>
 
-      {/* ── Bottom: runners + players (only when live) ─────────────── */}
-      {isLive && (
+      {/* ── Bottom: players (only when live and names available) ─────── */}
+      {hasPlayers && (
         <div className="sb-bottom-bar">
-          <div className="sb-diamond-wrap">
-            <DiamondDisplay r1={r1} r2={r2} r3={r3} />
-          </div>
           <div className="sb-players">
             {batterName && (
               <div className="sb-player">
