@@ -10,6 +10,8 @@ const EMPTY_FORM = {
   location: '',
   competition: '',
   gameId: '',
+  primaryColor: '#c0392b',
+  secondaryColor: '#1a1a2e',
 };
 
 function toDatetimeLocal(iso) {
@@ -51,6 +53,8 @@ export default function MatchEdit() {
         location: match.location,
         competition: match.competition,
         gameId: match.gameId,
+        primaryColor: match.primaryColor || '#c0392b',
+        secondaryColor: match.secondaryColor || '#1a1a2e',
       });
     }
   }, [id, isNew, navigate]);
@@ -226,6 +230,43 @@ export default function MatchEdit() {
                 Used to fetch live data from game.wbsc.org. Leave blank to show
                 scheduled match info on the overlay.
               </p>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="primaryColor" className="form-label">
+                Primary Color
+                <span className="label-hint">(team badge background)</span>
+              </label>
+              <div className="form-color-row">
+                <input
+                  id="primaryColor"
+                  name="primaryColor"
+                  type="color"
+                  className="form-input-color"
+                  value={form.primaryColor}
+                  onChange={handleChange}
+                />
+                <span className="color-hex-label">{form.primaryColor}</span>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="secondaryColor" className="form-label">
+                Secondary Color
+              </label>
+              <div className="form-color-row">
+                <input
+                  id="secondaryColor"
+                  name="secondaryColor"
+                  type="color"
+                  className="form-input-color"
+                  value={form.secondaryColor}
+                  onChange={handleChange}
+                />
+                <span className="color-hex-label">{form.secondaryColor}</span>
+              </div>
             </div>
           </div>
 

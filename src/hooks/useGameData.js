@@ -43,8 +43,9 @@ function normalise(raw) {
   const r3 = Boolean(Number(sit.runner3 ?? 0));
 
   // ── Players (situation) ──────────────────────────────────────────────────
-  const batterName  = sit.batter   ?? '';
+  const batterName  = sit.nbatter  ?? sit.batter   ?? '';
   const batterNum   = sit.batterid ?? '';
+  const batterAvg   = sit.batting  ?? sit.avg      ?? '';
   const pitcherName = sit.pitcher  ?? '';
   const pitcherNum  = sit.pitcherid ?? '';
 
@@ -72,7 +73,7 @@ function normalise(raw) {
     status, inning, isTop,
     balls, strikes, outs,
     r1, r2, r3,
-    batterName, batterNum,
+    batterName, batterNum, batterAvg,
     pitcherName, pitcherNum,
     innScore,
   };
