@@ -132,6 +132,34 @@ a:hover { text-decoration: underline; }
   line-height: 1.4;
 }
 
+/* ── Mode toggle (checkbox) ────────────────────────────────────────────── */
+.form-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 13px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s;
+}
+.form-toggle:has(input:checked) {
+  border-color: var(--accent);
+}
+.form-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-label {
+  font-size: 14px;
+  color: var(--text);
+}
+
 /* ── Color picker ──────────────────────────────────────────────────────── */
 .form-color-row {
   display: flex;

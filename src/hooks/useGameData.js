@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const POLL_INTERVAL = 5_000; // 5 seconds
+const POLL_INTERVAL   = 5_000; // live mode:   5 s between polls
+const REPLAY_INTERVAL = 3_000; // replay mode: 3 s between plays
 
 /**
  * Normalises a WBSC play{id}.json payload.
@@ -79,40 +80,20 @@ function normalise(raw) {
   };
 }
 
-export function useGameData(gameId) {
+/**
+ * @param {string}  gameId  - WBSC numeric game ID
+ * @param {boolean} replay  - true = replay mode (play1 → latest, 3 s/play)
+ *                            false = live mode  (always latest play, poll 5 s)
+ */
+export function useGameData(gameId, replay = false) {
   const [gameData, setGameData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const timerRef = useRef(null);
+  const timerRef   = useRef(null);
   const mountedRef = useRef(true);
-
-  const fetchData = useCallback(async () => {
-    if (!gameId) return;
-    try {
-      // Step 1: get the latest play ID (latest.json returns a bare number)
-      const latestRes = await fetch(`/gamedata/${gameId}/latest.json`, { cache: 'no-store' });
-      if (!latestRes.ok) throw new Error(`latest.json HTTP ${latestRes.status}`);
-      const playId = Number(await latestRes.json());
-      if (!playId) throw new Error(`Invalid play ID from latest.json`);
-
-      // Step 2: fetch that specific play
-      const playRes = await fetch(`/gamedata/${gameId}/play${playId}.json`, { cache: 'no-store' });
-      if (!playRes.ok) throw new Error(`play${playId}.json HTTP ${playRes.status}`);
-      const raw = await playRes.json();
-
-      if (mountedRef.current) {
-        setGameData(normalise(raw));
-        setError(null);
-      }
-    } catch (err) {
-      if (mountedRef.current) setError(err.message);
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-        timerRef.current = setTimeout(fetchData, POLL_INTERVAL);
-      }
-    }
-  }, [gameId]);
+  // replay tracking
+  const playNumRef = useRef(1);
+  const maxPlayRef = useRef(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -121,16 +102,64 @@ export function useGameData(gameId) {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     setGameData(null);
     setError(null);
-    fetchData();
+    playNumRef.current = 1;
+    maxPlayRef.current = null;
+
+    async function step() {
+      if (!mountedRef.current) return;
+      try {
+        // Fetch latest.json:
+        //   live mode  → every step (stay current)
+        //   replay mode → only on first step (to know the endpoint)
+        if (!replay || maxPlayRef.current === null) {
+          const latestRes = await fetch(`/gamedata/${gameId}/latest.json`, { cache: 'no-store' });
+          if (!latestRes.ok) throw new Error(`latest.json HTTP ${latestRes.status}`);
+          const n = Number(await latestRes.json());
+          if (!n) throw new Error(`Invalid play ID from latest.json`);
+          maxPlayRef.current = n;
+          if (!replay) playNumRef.current = n; // live: always jump to newest play
+        }
+
+        const playId = playNumRef.current;
+        const playRes = await fetch(`/gamedata/${gameId}/play${playId}.json`, { cache: 'no-store' });
+        if (!playRes.ok) throw new Error(`play${playId}.json HTTP ${playRes.status}`);
+        const raw = await playRes.json();
+
+        if (mountedRef.current) {
+          setGameData(normalise(raw));
+          setError(null);
+        }
+      } catch (err) {
+        if (mountedRef.current) setError(err.message);
+      } finally {
+        if (!mountedRef.current) return;
+        setLoading(false);
+
+        if (replay) {
+          // advance to next play, stop when we reach the last known play
+          const next = playNumRef.current + 1;
+          if (next <= (maxPlayRef.current ?? 0)) {
+            playNumRef.current = next;
+            timerRef.current = setTimeout(step, REPLAY_INTERVAL);
+          }
+          // else: replay finished — stay on last play, no more timers
+        } else {
+          timerRef.current = setTimeout(step, POLL_INTERVAL);
+        }
+      }
+    }
+
+    step();
 
     return () => {
       mountedRef.current = false;
       clearTimeout(timerRef.current);
     };
-  }, [gameId, fetchData]);
+  }, [gameId, replay]);
 
   return { gameData, loading, error };
 }
