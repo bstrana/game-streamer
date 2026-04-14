@@ -10,8 +10,6 @@ RUN npm ci --prefer-offline
 # Copy source and build
 COPY . .
 
-# Build args become VITE_ env vars at build time.
-# At runtime these are re-injected via entrypoint for dynamic config.
 ARG VITE_KEYCLOAK_URL=http://localhost:8080
 ARG VITE_KEYCLOAK_REALM=game-streamer
 ARG VITE_KEYCLOAK_CLIENT_ID=game-streamer-app
@@ -27,16 +25,19 @@ RUN npm run build
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────
 FROM nginx:1.27-alpine
 
+# Redirect nginx PID file to /tmp (Cloudron read-only filesystem)
+RUN sed -i 's|/var/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf
+
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy built SPA and nginx config
+# Copy built SPA, nginx server config, and entrypoint
 COPY --from=builder /build/dist /app/dist
 COPY nginx.conf /etc/nginx/conf.d/app.conf
+COPY start.sh /start.sh
 
-# Cloudron runs as non-root; nginx needs to bind to non-privileged port
-# Port 8000 is already non-privileged, nginx worker can run as nobody
-RUN chown -R nginx:nginx /app/dist && \
+RUN chmod +x /start.sh && \
+    chown -R nginx:nginx /app/dist && \
     chmod -R 755 /app/dist
 
 EXPOSE 8000
@@ -44,4 +45,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:8000/health || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/start.sh"]
