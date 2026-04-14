@@ -1,15 +1,5 @@
 import DiamondDisplay from './DiamondDisplay';
 
-function CountDots({ filled, total, activeClass }) {
-  return (
-    <div className="count-dots">
-      {Array.from({ length: total }).map((_, i) => (
-        <span key={i} className={`dot ${i < filled ? activeClass : 'dot-empty'}`} />
-      ))}
-    </div>
-  );
-}
-
 export default function Scoreboard({ gameData, match }) {
   /* ── Pre-game ───────────────────────────────────────────────────────── */
   if (!gameData) {
@@ -68,7 +58,7 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-teams">
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr">{awayAbbr || match.awayTeam}</span>
+              <span className="sb-abbr">{awayAbbr}</span>
               {(awayFull && awayFull !== awayAbbr) && (
                 <span className="sb-city">{awayFull}</span>
               )}
@@ -80,7 +70,7 @@ export default function Scoreboard({ gameData, match }) {
 
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr">{homeAbbr || match.homeTeam}</span>
+              <span className="sb-abbr">{homeAbbr}</span>
               {(homeFull && homeFull !== homeAbbr) && (
                 <span className="sb-city">{homeFull}</span>
               )}
@@ -109,20 +99,18 @@ export default function Scoreboard({ gameData, match }) {
             <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
           </div>
 
-          {/* Count dots */}
-          <div className="sb-count-dots-col">
-            <CountDots filled={balls}   total={4} activeClass="dot-ball" />
-            <CountDots filled={strikes} total={3} activeClass="dot-strike" />
+          {/* B · S numbers */}
+          <div className="sb-bs-nums">
+            <span className="sb-bs-val ball-val">{balls}</span>
+            <span className="sb-bs-sep">·</span>
+            <span className="sb-bs-val strike-val">{strikes}</span>
           </div>
 
-          {/* Outs + B·S numeric */}
-          <div className="sb-count-nums">
-            <span className="sb-outs">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <span key={i} className={`dot dot-sm ${i < outs ? 'dot-out' : 'dot-empty'}`} />
-              ))}
-            </span>
-            <span className="sb-bs">{balls} · {strikes}</span>
+          {/* Outs dots (2 positions) */}
+          <div className="sb-outs-dots">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
+            ))}
           </div>
 
         </div>
