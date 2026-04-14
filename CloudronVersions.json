@@ -22,8 +22,7 @@
           "KEYCLOAK_REALM": { "description": "Keycloak realm name", "value": "game-streamer" },
           "KEYCLOAK_CLIENT_ID": { "description": "Keycloak client ID", "value": "game-streamer-app" },
           "APP_BASE_URL": { "description": "Public URL of this app (used for overlay link generation)", "value": "https://gamestreamer.example.com" }
-        },        
-        "addons": { "localstorage": {} },
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
         "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
