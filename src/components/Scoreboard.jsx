@@ -14,20 +14,16 @@ export default function Scoreboard({ gameData, match }) {
       <div className="scoreboard">
         <div className="sb-main">
           <div className="sb-teams">
-            <div className="sb-row">
+            <div className="sb-row" style={{ background: awayBg }}>
               <div className="sb-team-info">
-                <span className="sb-abbr" style={{ background: awayBg }}>
-                  {match.awayTeam || 'Away'}
-                </span>
+                <span className="sb-abbr">{match.awayTeam || 'Away'}</span>
               </div>
               <div className="sb-score">—</div>
             </div>
             <div className="sb-row-divider" />
-            <div className="sb-row">
+            <div className="sb-row" style={{ background: homeBg }}>
               <div className="sb-team-info">
-                <span className="sb-abbr" style={{ background: homeBg }}>
-                  {match.homeTeam || 'Home'}
-                </span>
+                <span className="sb-abbr">{match.homeTeam || 'Home'}</span>
               </div>
               <div className="sb-score">—</div>
             </div>
@@ -69,8 +65,8 @@ export default function Scoreboard({ gameData, match }) {
   return (
     <div className="scoreboard">
 
-      {/* ── Top bar: pitcher (live only) ─────────────────────────────── */}
-      {isLive && pitcherName && (
+      {/* ── Top bar: pitcher ─────────────────────────────────────────── */}
+      {(isLive || match.replay) && pitcherName && (
         <div className="sb-top-bar">
           <span className="player-role">PIT</span>
           {pitcherNum && <span className="player-num">#{pitcherNum}</span>}
@@ -82,9 +78,9 @@ export default function Scoreboard({ gameData, match }) {
 
         {/* ── Left: stacked team rows ───────────────────────────────── */}
         <div className="sb-teams">
-          <div className="sb-row">
+          <div className="sb-row" style={{ background: awayBg }}>
             <div className="sb-team-info">
-              <span className="sb-abbr" style={{ background: awayBg }}>{awayAbbr}</span>
+              <span className="sb-abbr">{awayAbbr}</span>
               {(awayFull && awayFull !== awayAbbr) && (
                 <span className="sb-city">{awayFull}</span>
               )}
@@ -94,9 +90,9 @@ export default function Scoreboard({ gameData, match }) {
 
           <div className="sb-row-divider" />
 
-          <div className="sb-row">
+          <div className="sb-row" style={{ background: homeBg }}>
             <div className="sb-team-info">
-              <span className="sb-abbr" style={{ background: homeBg }}>{homeAbbr}</span>
+              <span className="sb-abbr">{homeAbbr}</span>
               {(homeFull && homeFull !== homeAbbr) && (
                 <span className="sb-city">{homeFull}</span>
               )}
@@ -147,8 +143,8 @@ export default function Scoreboard({ gameData, match }) {
         </div>
       </div>
 
-      {/* ── Bottom bar: batter (live only) ───────────────────────────── */}
-      {isLive && batterName && (
+      {/* ── Bottom bar: batter ───────────────────────────────────────── */}
+      {(isLive || match.replay) && batterName && (
         <div className="sb-bottom-bar">
           <span className="player-role">BAT</span>
           {batterNum && <span className="player-num">#{batterNum}</span>}
