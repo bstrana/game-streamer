@@ -15,15 +15,21 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-main">
           <div className="sb-teams">
             <div className="sb-row" style={{ background: awayBg }}>
-              <div className="sb-team-info">
-                <span className="sb-abbr">{match.awayTeam || 'Away'}</span>
+              <div className="sb-team-left">
+                {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
+                <div className="sb-team-info">
+                  <span className="sb-abbr">{match.awayTeam || 'Away'}</span>
+                </div>
               </div>
               <div className="sb-score">—</div>
             </div>
             <div className="sb-row-divider" />
             <div className="sb-row" style={{ background: homeBg }}>
-              <div className="sb-team-info">
-                <span className="sb-abbr">{match.homeTeam || 'Home'}</span>
+              <div className="sb-team-left">
+                {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
+                <div className="sb-team-info">
+                  <span className="sb-abbr">{match.homeTeam || 'Home'}</span>
+                </div>
               </div>
               <div className="sb-score">—</div>
             </div>
@@ -80,11 +86,14 @@ export default function Scoreboard({ gameData, match }) {
         {/* ── Left: stacked team rows ───────────────────────────────── */}
         <div className="sb-teams">
           <div className="sb-row" style={{ background: awayBg }}>
-            <div className="sb-team-info">
-              <span className="sb-abbr">{awayAbbr}</span>
-              {(awayFull && awayFull !== awayAbbr) && (
-                <span className="sb-city">{awayFull}</span>
-              )}
+            <div className="sb-team-left">
+              {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
+              <div className="sb-team-info">
+                <span className="sb-abbr">{awayAbbr}</span>
+                {(awayFull && awayFull !== awayAbbr) && (
+                  <span className="sb-city">{awayFull}</span>
+                )}
+              </div>
             </div>
             <div className="sb-score">{scoreAway}</div>
           </div>
@@ -92,11 +101,14 @@ export default function Scoreboard({ gameData, match }) {
           <div className="sb-row-divider" />
 
           <div className="sb-row" style={{ background: homeBg }}>
-            <div className="sb-team-info">
-              <span className="sb-abbr">{homeAbbr}</span>
-              {(homeFull && homeFull !== homeAbbr) && (
-                <span className="sb-city">{homeFull}</span>
-              )}
+            <div className="sb-team-left">
+              {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
+              <div className="sb-team-info">
+                <span className="sb-abbr">{homeAbbr}</span>
+                {(homeFull && homeFull !== homeAbbr) && (
+                  <span className="sb-city">{homeFull}</span>
+                )}
+              </div>
             </div>
             <div className="sb-score">{scoreHome}</div>
           </div>
