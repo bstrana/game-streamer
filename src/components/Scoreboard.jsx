@@ -1,7 +1,12 @@
 import DiamondDisplay from './DiamondDisplay';
 
+function teamBg(primary, secondary) {
+  return `linear-gradient(135deg, ${primary || '#c0392b'}, ${secondary || '#7b241c'})`;
+}
+
 export default function Scoreboard({ gameData, match }) {
-  const primaryColor = match.primaryColor || '#c0392b';
+  const awayBg = teamBg(match.awayPrimaryColor, match.awaySecondaryColor);
+  const homeBg = teamBg(match.homePrimaryColor, match.homeSecondaryColor);
 
   /* ── Pre-game (no live data) ────────────────────────────────────────── */
   if (!gameData) {
@@ -11,7 +16,7 @@ export default function Scoreboard({ gameData, match }) {
           <div className="sb-teams">
             <div className="sb-row">
               <div className="sb-team-info">
-                <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>
+                <span className="sb-abbr" style={{ background: awayBg }}>
                   {match.awayTeam || 'Away'}
                 </span>
               </div>
@@ -20,7 +25,7 @@ export default function Scoreboard({ gameData, match }) {
             <div className="sb-row-divider" />
             <div className="sb-row">
               <div className="sb-team-info">
-                <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>
+                <span className="sb-abbr" style={{ background: homeBg }}>
                   {match.homeTeam || 'Home'}
                 </span>
               </div>
@@ -79,7 +84,7 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-teams">
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>{awayAbbr}</span>
+              <span className="sb-abbr" style={{ background: awayBg }}>{awayAbbr}</span>
               {(awayFull && awayFull !== awayAbbr) && (
                 <span className="sb-city">{awayFull}</span>
               )}
@@ -91,7 +96,7 @@ export default function Scoreboard({ gameData, match }) {
 
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr" style={{ backgroundColor: primaryColor }}>{homeAbbr}</span>
+              <span className="sb-abbr" style={{ background: homeBg }}>{homeAbbr}</span>
               {(homeFull && homeFull !== homeAbbr) && (
                 <span className="sb-city">{homeFull}</span>
               )}
@@ -120,23 +125,23 @@ export default function Scoreboard({ gameData, match }) {
             <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
           </div>
 
-          {/* B · S numbers */}
-          <div className="sb-bs-nums">
-            <span className="sb-bs-val ball-val">{balls}</span>
-            <span className="sb-bs-sep">·</span>
-            <span className="sb-bs-val strike-val">{strikes}</span>
-          </div>
-
-          {/* Outs dots (2 positions) */}
-          <div className="sb-outs-dots">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
-            ))}
-          </div>
-
-          {/* Base runners diamond */}
-          <div className="sb-side-diamond">
-            <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+          {/* Count (B·S + outs) alongside diamond */}
+          <div className="sb-count-diamond">
+            <div className="sb-count">
+              <div className="sb-bs-nums">
+                <span className="sb-bs-val ball-val">{balls}</span>
+                <span className="sb-bs-sep">·</span>
+                <span className="sb-bs-val strike-val">{strikes}</span>
+              </div>
+              <div className="sb-outs-dots">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
+                ))}
+              </div>
+            </div>
+            <div className="sb-side-diamond">
+              <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+            </div>
           </div>
 
         </div>

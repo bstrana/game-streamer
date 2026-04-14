@@ -10,8 +10,10 @@ const EMPTY_FORM = {
   location: '',
   competition: '',
   gameId: '',
-  primaryColor: '#c0392b',
-  secondaryColor: '#1a1a2e',
+  awayPrimaryColor: '#c0392b',
+  awaySecondaryColor: '#7b241c',
+  homePrimaryColor: '#2471a3',
+  homeSecondaryColor: '#1a5276',
   replay: false,
 };
 
@@ -54,8 +56,10 @@ export default function MatchEdit() {
         location: match.location,
         competition: match.competition,
         gameId: match.gameId,
-        primaryColor: match.primaryColor || '#c0392b',
-        secondaryColor: match.secondaryColor || '#1a1a2e',
+        awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
+        awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
+        homePrimaryColor: match.homePrimaryColor || '#2471a3',
+        homeSecondaryColor: match.homeSecondaryColor || '#1a5276',
         replay: match.replay || false,
       });
     }
@@ -255,37 +259,58 @@ export default function MatchEdit() {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="primaryColor" className="form-label">
-                Primary Color
-                <span className="label-hint">(team badge background)</span>
-              </label>
-              <div className="form-color-row">
+              <label className="form-label">Away Team Colors</label>
+              <div className="form-colors-pair">
                 <input
-                  id="primaryColor"
-                  name="primaryColor"
+                  id="awayPrimaryColor"
+                  name="awayPrimaryColor"
                   type="color"
                   className="form-input-color"
-                  value={form.primaryColor}
+                  value={form.awayPrimaryColor}
                   onChange={handleChange}
+                  title="Away primary"
                 />
-                <span className="color-hex-label">{form.primaryColor}</span>
+                <input
+                  id="awaySecondaryColor"
+                  name="awaySecondaryColor"
+                  type="color"
+                  className="form-input-color"
+                  value={form.awaySecondaryColor}
+                  onChange={handleChange}
+                  title="Away secondary"
+                />
+                <div
+                  className="color-gradient-preview"
+                  style={{ background: `linear-gradient(135deg, ${form.awayPrimaryColor}, ${form.awaySecondaryColor})` }}
+                />
               </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="secondaryColor" className="form-label">
-                Secondary Color
-              </label>
-              <div className="form-color-row">
+              <label className="form-label">Home Team Colors</label>
+              <div className="form-colors-pair">
                 <input
-                  id="secondaryColor"
-                  name="secondaryColor"
+                  id="homePrimaryColor"
+                  name="homePrimaryColor"
                   type="color"
                   className="form-input-color"
-                  value={form.secondaryColor}
+                  value={form.homePrimaryColor}
                   onChange={handleChange}
+                  title="Home primary"
                 />
-                <span className="color-hex-label">{form.secondaryColor}</span>
+                <input
+                  id="homeSecondaryColor"
+                  name="homeSecondaryColor"
+                  type="color"
+                  className="form-input-color"
+                  value={form.homeSecondaryColor}
+                  onChange={handleChange}
+                  title="Home secondary"
+                />
+                <div
+                  className="color-gradient-preview"
+                  style={{ background: `linear-gradient(135deg, ${form.homePrimaryColor}, ${form.homeSecondaryColor})` }}
+                />
               </div>
             </div>
           </div>
