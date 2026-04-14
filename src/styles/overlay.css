@@ -214,7 +214,7 @@
   border: 1.5px solid #334155;
 }
 .dot-empty  { background: #1e293b; }
-.dot-out    { background: #ef4444; border-color: #dc2626; }
+.dot-out    { background: #fbbf24; border-color: #f59e0b; }
 
 /* B · S numeric display */
 .sb-bs-nums {
@@ -227,7 +227,7 @@
   line-height: 1;
 }
 .ball-val   { color: #22c55e; }
-.strike-val { color: #f59e0b; }
+.strike-val { color: #ef4444; }
 .sb-bs-sep  { color: #475569; font-weight: 400; font-size: 18px; }
 
 /* Outs dots row */
@@ -300,6 +300,10 @@
   text-transform: uppercase;
   letter-spacing: .02em;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .player-stat {
   font-size: 11px;
