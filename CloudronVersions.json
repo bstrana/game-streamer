@@ -18,7 +18,7 @@
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.0",
         "addons": { "localstorage": {} },
         "icon": "file://appicon.png",
-        "iconUrl": "https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png",
+        "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
         "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
         "mediaLinks": [],
         "changelog": "Initial release. Manage baseball matches and generate live scoreboard overlays for OBS browser source, powered by WBSC live game data.",
