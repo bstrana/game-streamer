@@ -15,7 +15,7 @@
         "contactEmail": "support@example.com",
         "healthCheckPath": "/health",
         "httpPort": 8000,
-        "dockerImage": "ghcr.io/bstrana/game-streamer:latest",
+        "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.0",
         "addons": { "localstorage": {} },
         "env": {
           "KEYCLOAK_URL": { "description": "Keycloak server URL (e.g. https://auth.example.com)", "value": "http://localhost:8080" },

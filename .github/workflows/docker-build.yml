@@ -21,6 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Read version from package.json so the image tag matches the
+      # version declared in CloudronManifest.json / CloudronVersions.json
+      - name: Read app version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
       # Required for linux/arm64 cross-compilation
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -36,6 +42,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Tags produced on every merge to main:
+      #   ghcr.io/owner/repo:1.0.0   ← version from package.json (Cloudron uses this)
       #   ghcr.io/owner/repo:latest
       #   ghcr.io/owner/repo:sha-<short>
       - name: Extract metadata
@@ -44,6 +51,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=${{ steps.version.outputs.value }}
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
 
