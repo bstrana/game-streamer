@@ -1,5 +1,7 @@
 # ── Stage 1: Build ──────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+# Always build on the host platform (amd64 in CI) to avoid QEMU crashes.
+# The output is static HTML/JS/CSS so the build platform doesn't matter.
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 
 WORKDIR /build
 
