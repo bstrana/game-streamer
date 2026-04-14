@@ -12,9 +12,9 @@ function normalise(raw) {
   const sit  = raw.situation  ?? {};
   const ls   = raw.linescore  ?? {};
 
-  // ── Teams (top-level, not in situation/linescore) ────────────────────────
-  const awayAbbr = raw.team_away?.abbr ?? raw.team_away?.name ?? raw.team_away ?? raw.ateam ?? '';
-  const homeAbbr = raw.team_home?.abbr ?? raw.team_home?.name ?? raw.team_home ?? raw.hteam ?? '';
+  // ── Teams (top-level) ────────────────────────────────────────────────────
+  const awayAbbr = raw.eventaway ?? raw.team_away?.abbr ?? raw.team_away?.name ?? raw.team_away ?? raw.ateam ?? '';
+  const homeAbbr = raw.eventhome ?? raw.team_home?.abbr ?? raw.team_home?.name ?? raw.team_home ?? raw.hteam ?? '';
   const awayFull = raw.team_away?.fullname ?? raw.team_away_full ?? awayAbbr;
   const homeFull = raw.team_home?.fullname ?? raw.team_home_full ?? homeAbbr;
 
