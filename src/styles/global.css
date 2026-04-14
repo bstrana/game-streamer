@@ -160,12 +160,7 @@ a:hover { text-decoration: underline; }
   color: var(--text);
 }
 
-/* ── Color picker ──────────────────────────────────────────────────────── */
-.form-color-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+/* ── Color pickers ─────────────────────────────────────────────────────── */
 .form-input-color {
   width: 44px;
   height: 36px;
@@ -177,10 +172,18 @@ a:hover { text-decoration: underline; }
   flex-shrink: 0;
 }
 .form-input-color:focus { outline: none; border-color: var(--accent); }
-.color-hex-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-family: var(--mono);
+
+/* Two pickers side-by-side + gradient swatch */
+.form-colors-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-gradient-preview {
+  flex: 1;
+  height: 36px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
 }
 
 /* ── Loading screen ────────────────────────────────────────────────────── */

@@ -93,7 +93,6 @@
   line-height: 1;
   text-transform: uppercase;
   color: #fff;
-  background-color: #c0392b; /* fallback; overridden by inline style */
   padding: 3px 7px;
   border-radius: 4px;
 }
