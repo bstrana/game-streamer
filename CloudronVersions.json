@@ -1,0 +1,24 @@
+[
+  {
+    "version": "1.0.0",
+    "manifest": {
+      "id": "org.gamestreamer.app",
+      "title": "Game Streamer",
+      "author": "Game Streamer",
+      "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
+      "tagline": "Baseball scoreboard overlay for OBS streaming",
+      "version": "1.0.0",
+      "manifestVersion": 2,
+      "healthCheckPath": "/",
+      "httpPort": 8000,
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.0",
+      "addons": {
+        "oauth": {},
+        "ldap": {}
+      },
+      "minBoxVersion": "7.2.0",
+      "changelog": "Initial release.",
+      "postInstallMessage": "Configure Keycloak via environment variables: VITE_KEYCLOAK_URL, VITE_KEYCLOAK_REALM, VITE_KEYCLOAK_CLIENT_ID."
+    }
+  }
+]
