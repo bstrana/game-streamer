@@ -272,12 +272,29 @@
 /* ── Bottom bar: batter ─────────────────────────────────────────────────── */
 .sb-bottom-bar {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
   padding: 5px 14px;
   border-top: 1px solid rgba(255,255,255,.07);
   background: rgba(0,0,0,.25);
+}
+
+.sb-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.sb-play-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-style: italic;
+  text-align: right;
+  letter-spacing: .01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player-role {

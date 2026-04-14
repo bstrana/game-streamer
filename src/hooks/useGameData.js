@@ -50,6 +50,9 @@ function normalise(raw) {
   const _pp = sit.pitches ?? sit.pitchcount ?? sit.totalp ?? sit.numpitches ?? null;
   const pitcherPitches = _pp !== null ? Number(_pp) : null;
 
+  // ── Play description (first entry in playdata) ───────────────────────────
+  const playDesc = raw.playdata?.[0]?.n?.trim() ?? '';
+
   // ── Inning-by-inning (linescore.awayruns / homeruns) ─────────────────────
   // Arrays are 1-indexed: index 0 is null/unused, index N = inning N.
   const innScore = [];
@@ -76,6 +79,7 @@ function normalise(raw) {
     r1, r2, r3,
     batterName, batterAvg,
     pitcherName, pitcherPitches,
+    playDesc,
     innScore,
   };
 }

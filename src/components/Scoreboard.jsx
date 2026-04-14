@@ -57,6 +57,7 @@ export default function Scoreboard({ gameData, match }) {
     r1, r2, r3,
     pitcherName, pitcherPitches,
     batterName, batterAvg,
+    playDesc,
   } = gameData;
 
   const isFinal = status === 2;
@@ -146,9 +147,14 @@ export default function Scoreboard({ gameData, match }) {
       {/* ── Bottom bar: batter ───────────────────────────────────────── */}
       {(isLive || match.replay) && batterName && (
         <div className="sb-bottom-bar">
-          <span className="player-role">BAT</span>
-          <span className="player-name">{batterName}</span>
-          {batterAvg && <span className="player-stat">{batterAvg}</span>}
+          <div className="sb-bottom-row">
+            <span className="player-role">BAT</span>
+            <span className="player-name">{batterName}</span>
+            {batterAvg && <span className="player-stat">{batterAvg}</span>}
+          </div>
+          {match.replay && playDesc && (
+            <div className="sb-play-desc">{playDesc}</div>
+          )}
         </div>
       )}
 
