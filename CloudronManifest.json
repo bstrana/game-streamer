@@ -36,7 +36,7 @@
   "mediaLinks": [
     "https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png"
   ],
-  "changelog": "Initial release.",
+  "changelog": "Add environment variable configuration for Keycloak and app base URL via Cloudron Configure panel.",
   "packagerName": "bstrana",
   "packagerUrl": "https://github.com/bstrana"
 }
