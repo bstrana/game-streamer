@@ -47,7 +47,8 @@ function normalise(raw) {
   const batterName    = sit.nbatter  ?? sit.batter  ?? '';
   const batterAvg     = sit.batting  ?? sit.avg     ?? '';
   const pitcherName   = sit.pitcher  ?? '';
-  const pitcherPitches = sit.pitches != null ? String(sit.pitches) : '';
+  const _pp = sit.pitches ?? sit.pitchcount ?? sit.totalp ?? sit.numpitches ?? null;
+  const pitcherPitches = _pp !== null ? Number(_pp) : null;
 
   // ── Inning-by-inning (linescore.awayruns / homeruns) ─────────────────────
   // Arrays are 1-indexed: index 0 is null/unused, index N = inning N.

@@ -70,7 +70,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 5px 14px;
   gap: 12px;
 }
 
@@ -262,8 +262,9 @@
 .sb-top-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-bottom: 1px solid rgba(255,255,255,.07);
   background: rgba(0,0,0,.3);
 }
@@ -272,8 +273,9 @@
 .sb-bottom-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-top: 1px solid rgba(255,255,255,.07);
   background: rgba(0,0,0,.25);
 }

@@ -70,7 +70,7 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-top-bar">
           <span className="player-role">PIT</span>
           <span className="player-name">{pitcherName}</span>
-          {pitcherPitches && <span className="player-stat">{pitcherPitches} P</span>}
+          {pitcherPitches !== null && <span className="player-stat">{pitcherPitches} P</span>}
         </div>
       )}
 
