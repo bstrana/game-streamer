@@ -12,6 +12,7 @@ const EMPTY_FORM = {
   gameId: '',
   primaryColor: '#c0392b',
   secondaryColor: '#1a1a2e',
+  replay: false,
 };
 
 function toDatetimeLocal(iso) {
@@ -55,6 +56,7 @@ export default function MatchEdit() {
         gameId: match.gameId,
         primaryColor: match.primaryColor || '#c0392b',
         secondaryColor: match.secondaryColor || '#1a1a2e',
+        replay: match.replay || false,
       });
     }
   }, [id, isNew, navigate]);
@@ -70,8 +72,9 @@ export default function MatchEdit() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : value;
+    setForm((prev) => ({ ...prev, [name]: val }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -231,6 +234,23 @@ export default function MatchEdit() {
                 scheduled match info on the overlay.
               </p>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Overlay Mode</label>
+            <label className="form-toggle">
+              <input
+                type="checkbox"
+                name="replay"
+                checked={form.replay}
+                onChange={handleChange}
+              />
+              <span className="toggle-label">Replay mode</span>
+            </label>
+            <p className="form-hint">
+              Steps through every play from play 1 to the latest, one every 3 s.
+              Requires a Game ID.
+            </p>
           </div>
 
           <div className="form-row">

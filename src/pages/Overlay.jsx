@@ -28,7 +28,7 @@ export default function Overlay() {
     }
   }, [matchId]);
 
-  const { gameData, loading, error } = useGameData(match?.gameId || '');
+  const { gameData, loading, error } = useGameData(match?.gameId || '', match?.replay || false);
 
   if (notFound) {
     return (

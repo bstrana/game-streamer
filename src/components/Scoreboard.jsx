@@ -105,12 +105,13 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-side">
 
           {/* Status */}
-          {isLive && (
+          {isLive && !match.replay && (
             <div className="sb-live-row">
               <span className="sb-live-dot" />
               <span className="sb-live-text">LIVE</span>
             </div>
           )}
+          {match.replay && <div className="sb-replay-text">REPLAY</div>}
           {isFinal && <div className="sb-final-text">FINAL</div>}
 
           {/* Inning */}
