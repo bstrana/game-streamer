@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const POLL_INTERVAL = 10_000; // 10 seconds
+const POLL_INTERVAL = 5_000; // 5 seconds
 
 /**
  * Normalises the raw WBSC play123.json payload into a consistent shape,
@@ -126,11 +126,23 @@ export function useGameData(gameId) {
 
   const fetchData = useCallback(async () => {
     if (!gameId) return;
-    const url = `/gamedata/${gameId}/play123.json`;
     try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const raw = await res.json();
+      // Step 1: get the latest play ID
+      const latestRes = await fetch(`/gamedata/${gameId}/latest.json`, { cache: 'no-store' });
+      if (!latestRes.ok) throw new Error(`latest.json HTTP ${latestRes.status}`);
+      const latestJson = await latestRes.json();
+
+      // latest.json may use different field names
+      const playId =
+        latestJson.latestplayid ?? latestJson.playid ?? latestJson.id ??
+        latestJson.latest ?? latestJson.play_id;
+      if (playId == null) throw new Error('No play ID in latest.json');
+
+      // Step 2: fetch that specific play
+      const playRes = await fetch(`/gamedata/${gameId}/play${playId}.json`, { cache: 'no-store' });
+      if (!playRes.ok) throw new Error(`play${playId}.json HTTP ${playRes.status}`);
+      const raw = await playRes.json();
+
       if (mountedRef.current) {
         setGameData(normalise(raw));
         setError(null);
