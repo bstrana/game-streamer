@@ -68,7 +68,7 @@ export default function Scoreboard({ gameData, match }) {
         <div className="sb-teams">
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr">{awayAbbr || match.awayTeam}</span>
+              <span className="sb-abbr">{awayAbbr}</span>
               {(awayFull && awayFull !== awayAbbr) && (
                 <span className="sb-city">{awayFull}</span>
               )}
@@ -80,7 +80,7 @@ export default function Scoreboard({ gameData, match }) {
 
           <div className="sb-row">
             <div className="sb-team-info">
-              <span className="sb-abbr">{homeAbbr || match.homeTeam}</span>
+              <span className="sb-abbr">{homeAbbr}</span>
               {(homeFull && homeFull !== homeAbbr) && (
                 <span className="sb-city">{homeFull}</span>
               )}
