@@ -25,40 +25,45 @@ function normalise(raw) {
     raw.score?.home ?? raw.score_home ?? raw.hscore ??
     raw.linescore?.hometotals?.R ?? 0;
 
+  const sit = raw.situation ?? {};
+
   // ── Game state ───────────────────────────────────────────────────────────
   const status =
     raw.gamestatus ?? raw.status ?? raw.game_status ?? 0;
   // 0 = scheduled/pre-game, 1 = in progress, 2 = final, 3 = postponed
 
+  // currentinning e.g. "BOT 5" or "TOP 3"
+  const currentInningStr = sit.currentinning ?? '';
+  const [halfStr, innFromStr] = currentInningStr.split(' ');
   const inning =
-    raw.period ?? raw.inning ?? raw.inn ?? 1;
+    raw.period ?? raw.inning ?? raw.inn ??
+    (innFromStr ? Number(innFromStr) : undefined) ??
+    Math.floor(Number(sit.inning)) || 1;
   const isTop =
-    raw.topbot === 'T' ||
-    raw.topbot === 1 ||
-    raw.top_bot === 'T' ||
-    raw.top_bot === 1 ||
+    raw.topbot === 'T' || raw.topbot === 1 ||
+    raw.top_bot === 'T' || raw.top_bot === 1 ||
     raw.topbot === 'Top' ||
-    false;
+    (halfStr ? halfStr.toUpperCase() === 'TOP' : false);
 
   // ── Count ────────────────────────────────────────────────────────────────
-  const balls   = Number(raw.ball   ?? raw.balls   ?? 0);
-  const strikes = Number(raw.strike ?? raw.strikes ?? 0);
-  const outs    = Number(raw.out    ?? raw.outs    ?? 0);
+  const balls   = Number(raw.ball   ?? raw.balls   ?? sit.balls   ?? 0);
+  const strikes = Number(raw.strike ?? raw.strikes ?? sit.strikes ?? 0);
+  const outs    = Number(raw.out    ?? raw.outs    ?? sit.outs    ?? 0);
 
   // ── Runners (1 = occupied, 0 = empty) ───────────────────────────────────
-  const r1 = Boolean(Number(raw.r1 ?? 0));
-  const r2 = Boolean(Number(raw.r2 ?? 0));
-  const r3 = Boolean(Number(raw.r3 ?? 0));
+  const r1 = Boolean(Number(raw.r1 ?? sit.runner1 ?? 0));
+  const r2 = Boolean(Number(raw.r2 ?? sit.runner2 ?? 0));
+  const r3 = Boolean(Number(raw.r3 ?? sit.runner3 ?? 0));
 
   // ── Players ─────────────────────────────────────────────────────────────
   const pitcherName =
-    raw.pitcher?.name ?? raw.pitcher_name ?? raw.pitcher ?? '';
+    raw.pitcher?.name ?? raw.pitcher_name ?? sit.pitcher ?? raw.pitcher ?? '';
   const pitcherNum =
-    raw.pitcher?.num ?? raw.pitcher_num ?? '';
+    raw.pitcher?.num ?? raw.pitcher_num ?? sit.pitcherid ?? '';
   const batterName =
-    raw.batter?.name ?? raw.batter_name ?? raw.batter ?? '';
+    raw.batter?.name ?? raw.batter_name ?? sit.batter ?? raw.batter ?? '';
   const batterNum =
-    raw.batter?.num ?? raw.batter_num ?? '';
+    raw.batter?.num ?? raw.batter_num ?? sit.batterid ?? '';
 
   // ── Inning-by-inning scores ──────────────────────────────────────────────
   // Prefer the linescore.awayruns/homeruns arrays (index 0 = unused/null,
