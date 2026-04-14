@@ -70,7 +70,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 5px 14px;
   gap: 12px;
 }
 
@@ -79,6 +79,17 @@
   background: rgba(0,0,0,.25);
 }
 
+.sb-team-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sb-team-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 .sb-team-info {
   display: flex;
   flex-direction: column;
@@ -262,8 +273,9 @@
 .sb-top-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-bottom: 1px solid rgba(255,255,255,.07);
   background: rgba(0,0,0,.3);
 }
@@ -271,11 +283,29 @@
 /* ── Bottom bar: batter ─────────────────────────────────────────────────── */
 .sb-bottom-bar {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 5px 14px;
   border-top: 1px solid rgba(255,255,255,.07);
   background: rgba(0,0,0,.25);
+}
+
+.sb-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.sb-play-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-style: italic;
+  text-align: right;
+  letter-spacing: .01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player-role {

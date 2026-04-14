@@ -12,8 +12,10 @@ const EMPTY_FORM = {
   gameId: '',
   awayPrimaryColor: '#c0392b',
   awaySecondaryColor: '#7b241c',
+  awayLogoUrl: '',
   homePrimaryColor: '#2471a3',
   homeSecondaryColor: '#1a5276',
+  homeLogoUrl: '',
   replay: false,
 };
 
@@ -58,8 +60,10 @@ export default function MatchEdit() {
         gameId: match.gameId,
         awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
         awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
+        awayLogoUrl: match.awayLogoUrl || '',
         homePrimaryColor: match.homePrimaryColor || '#2471a3',
         homeSecondaryColor: match.homeSecondaryColor || '#1a5276',
+        homeLogoUrl: match.homeLogoUrl || '',
         replay: match.replay || false,
       });
     }
@@ -312,6 +316,35 @@ export default function MatchEdit() {
                   style={{ background: `linear-gradient(135deg, ${form.homePrimaryColor}, ${form.homeSecondaryColor})` }}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="awayLogoUrl" className="form-label">Away Team Logo</label>
+              <input
+                id="awayLogoUrl"
+                name="awayLogoUrl"
+                type="url"
+                className="form-input"
+                value={form.awayLogoUrl}
+                onChange={handleChange}
+                placeholder="https://example.com/away-logo.png"
+                autoComplete="off"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="homeLogoUrl" className="form-label">Home Team Logo</label>
+              <input
+                id="homeLogoUrl"
+                name="homeLogoUrl"
+                type="url"
+                className="form-input"
+                value={form.homeLogoUrl}
+                onChange={handleChange}
+                placeholder="https://example.com/home-logo.png"
+                autoComplete="off"
+              />
             </div>
           </div>
 
