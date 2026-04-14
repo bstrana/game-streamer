@@ -16,6 +16,7 @@ function toDatetimeLocal(iso) {
   if (!iso) return '';
   try {
     const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
     // format as YYYY-MM-DDTHH:MM for datetime-local input
     const pad = (n) => String(n).padStart(2, '0');
     return (
@@ -86,8 +87,12 @@ export default function MatchEdit() {
       gameId: form.gameId.trim(),
       location: form.location.trim(),
       competition: form.competition.trim(),
-      // Convert datetime-local to ISO string
-      time: form.time ? new Date(form.time).toISOString() : '',
+      // Convert datetime-local to ISO string, guard against invalid dates
+      time: (() => {
+        if (!form.time) return '';
+        const d = new Date(form.time);
+        return isNaN(d.getTime()) ? '' : d.toISOString();
+      })(),
     };
 
     if (isNew) {

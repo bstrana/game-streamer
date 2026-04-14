@@ -78,7 +78,7 @@ export default function Scoreboard({ gameData, match }) {
           </div>
           <div className="sb-middle">
             <div className="sb-inning-label">Scheduled</div>
-            {match.time && (
+            {match.time && !isNaN(new Date(match.time).getTime()) && (
               <div className="sb-game-time">
                 {new Intl.DateTimeFormat(undefined, {
                   dateStyle: 'medium',
