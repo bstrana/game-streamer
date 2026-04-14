@@ -4,7 +4,7 @@
   "author": "bstrana",
   "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
   "tagline": "Baseball scoreboard overlay for OBS streaming",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "manifestVersion": 2,
   "minBoxVersion": "9.1.0",
   "website": "https://github.com/bstrana/game-streamer",
@@ -36,7 +36,7 @@
   "mediaLinks": [
     "https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png"
   ],
-  "changelog": "Add primary/secondary color pickers to match settings; apply primary color as team badge background in overlay; show base diamond always; remove PRE label; center-align scores.",
+  "changelog": "Separate pitcher/batter bars: pitcher name above scoreboard, batter name+avg below; read nbatter, batting, avg from situation.",
   "packagerName": "bstrana",
   "packagerUrl": "https://github.com/bstrana"
 }

@@ -243,42 +243,40 @@
   height: 52px;
 }
 
-/* ── Bottom bar: players ────────────────────────────────────────────────── */
+/* ── Top bar: pitcher ───────────────────────────────────────────────────── */
+.sb-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: rgba(0,0,0,.3);
+}
+
+/* ── Bottom bar: batter ─────────────────────────────────────────────────── */
 .sb-bottom-bar {
   display: flex;
   align-items: center;
-  padding: 8px 14px;
+  gap: 6px;
+  padding: 6px 14px;
   border-top: 1px solid rgba(255,255,255,.07);
   background: rgba(0,0,0,.25);
-  width: 100%;
-  box-sizing: border-box;
 }
 
-.sb-players {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-.sb-player {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-}
 .player-role {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: .1em;
   color: #475569;
   font-weight: 800;
-  min-width: 26px;
+  min-width: 24px;
 }
 .player-num {
   font-size: 10px;
   color: #60a5fa;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  min-width: 22px;
+  min-width: 20px;
 }
 .player-name {
   font-size: 12px;
@@ -286,4 +284,12 @@
   color: #e2e8f0;
   text-transform: uppercase;
   letter-spacing: .02em;
+  flex: 1;
+}
+.player-avg {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 }

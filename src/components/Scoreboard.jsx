@@ -55,15 +55,24 @@ export default function Scoreboard({ gameData, match }) {
     balls, strikes, outs,
     r1, r2, r3,
     pitcherName, pitcherNum,
-    batterName, batterNum,
+    batterName, batterNum, batterAvg,
   } = gameData;
 
   const isFinal = status === 2;
   const isLive  = status === 1;
-  const hasPlayers = isLive && (batterName || pitcherName);
 
   return (
     <div className="scoreboard">
+
+      {/* ── Top bar: pitcher (live only) ─────────────────────────────── */}
+      {isLive && pitcherName && (
+        <div className="sb-top-bar">
+          <span className="player-role">PIT</span>
+          {pitcherNum && <span className="player-num">#{pitcherNum}</span>}
+          <span className="player-name">{pitcherName}</span>
+        </div>
+      )}
+
       <div className="sb-main">
 
         {/* ── Left: stacked team rows ───────────────────────────────── */}
@@ -132,25 +141,15 @@ export default function Scoreboard({ gameData, match }) {
         </div>
       </div>
 
-      {/* ── Bottom: players (only when live and names available) ─────── */}
-      {hasPlayers && (
+      {/* ── Bottom bar: batter (live only) ───────────────────────────── */}
+      {isLive && batterName && (
         <div className="sb-bottom-bar">
-          <div className="sb-players">
-            {batterName && (
-              <div className="sb-player">
-                <span className="player-role">BAT</span>
-                {batterNum && <span className="player-num">#{batterNum}</span>}
-                <span className="player-name">{batterName}</span>
-              </div>
-            )}
-            {pitcherName && (
-              <div className="sb-player">
-                <span className="player-role">PIT</span>
-                {pitcherNum && <span className="player-num">#{pitcherNum}</span>}
-                <span className="player-name">{pitcherName}</span>
-              </div>
-            )}
-          </div>
+          <span className="player-role">BAT</span>
+          {batterNum && <span className="player-num">#{batterNum}</span>}
+          <span className="player-name">{batterName}</span>
+          {batterAvg && (
+            <span className="player-avg">{batterAvg}</span>
+          )}
         </div>
       )}
 
