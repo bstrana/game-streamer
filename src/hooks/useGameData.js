@@ -88,17 +88,11 @@ export function useGameData(gameId) {
   const fetchData = useCallback(async () => {
     if (!gameId) return;
     try {
-      // Step 1: get the latest play ID
+      // Step 1: get the latest play ID (latest.json returns a bare number)
       const latestRes = await fetch(`/gamedata/${gameId}/latest.json`, { cache: 'no-store' });
       if (!latestRes.ok) throw new Error(`latest.json HTTP ${latestRes.status}`);
-      const latestJson = await latestRes.json();
-
-      // latest.json may be a bare number or an object with various key names
-      const playId = typeof latestJson === 'number'
-        ? latestJson
-        : (latestJson.latestplayid ?? latestJson.playid ?? latestJson.id ??
-           latestJson.latest ?? latestJson.play_id);
-      if (playId == null) throw new Error(`No play ID in latest.json: ${JSON.stringify(latestJson)}`);
+      const playId = Number(await latestRes.json());
+      if (!playId) throw new Error(`Invalid play ID from latest.json`);
 
       // Step 2: fetch that specific play
       const playRes = await fetch(`/gamedata/${gameId}/play${playId}.json`, { cache: 'no-store' });
