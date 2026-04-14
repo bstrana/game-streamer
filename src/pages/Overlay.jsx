@@ -45,7 +45,7 @@ export default function Overlay() {
       {loading && !gameData && match.gameId && (
         <div className="overlay-loading">Loading live data…</div>
       )}
-      {error && (
+      {error && !gameData && (
         <div className="overlay-error-banner">
           ⚠ {error}
         </div>

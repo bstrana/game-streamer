@@ -125,23 +125,23 @@ export default function Scoreboard({ gameData, match }) {
             <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
           </div>
 
-          {/* B · S numbers */}
-          <div className="sb-bs-nums">
-            <span className="sb-bs-val ball-val">{balls}</span>
-            <span className="sb-bs-sep">·</span>
-            <span className="sb-bs-val strike-val">{strikes}</span>
-          </div>
-
-          {/* Outs dots (2 positions) */}
-          <div className="sb-outs-dots">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
-            ))}
-          </div>
-
-          {/* Base runners diamond */}
-          <div className="sb-side-diamond">
-            <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+          {/* Count (B·S + outs) alongside diamond */}
+          <div className="sb-count-diamond">
+            <div className="sb-count">
+              <div className="sb-bs-nums">
+                <span className="sb-bs-val ball-val">{balls}</span>
+                <span className="sb-bs-sep">·</span>
+                <span className="sb-bs-val strike-val">{strikes}</span>
+              </div>
+              <div className="sb-outs-dots">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
+                ))}
+              </div>
+            </div>
+            <div className="sb-side-diamond">
+              <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+            </div>
           </div>
 
         </div>

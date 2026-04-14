@@ -130,7 +130,7 @@
   justify-content: center;
   padding: 10px 14px;
   gap: 4px;
-  min-width: 80px;
+  min-width: 130px;
 }
 
 /* Live indicator */
@@ -223,27 +223,39 @@
 .sb-bs-nums {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: 14px;
+  font-weight: 900;
+  font-size: 24px;
   line-height: 1;
 }
 .ball-val   { color: #22c55e; }
 .strike-val { color: #f59e0b; }
-.sb-bs-sep  { color: #475569; font-weight: 400; }
+.sb-bs-sep  { color: #475569; font-weight: 400; font-size: 18px; }
 
 /* Outs dots row */
 .sb-outs-dots {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
 }
 
-/* Diamond in right side panel */
-.sb-side-diamond {
-  margin-top: 2px;
+/* Count (B·S + outs) and diamond side by side */
+.sb-count-diamond {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
+.sb-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Diamond in right side panel */
+.sb-side-diamond { flex-shrink: 0; }
 .sb-side-diamond svg {
   width: 56px;
   height: 52px;
