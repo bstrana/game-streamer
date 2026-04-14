@@ -20,7 +20,9 @@
         "icon": "file://appicon.png",
         "iconUrl": "https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png",
         "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": [],
+        "mediaLinks": [
+          "https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png"
+        ],
         "changelog": "Initial release. Manage baseball matches and generate live scoreboard overlays for OBS browser source, powered by WBSC live game data.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
