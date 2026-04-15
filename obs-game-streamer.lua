@@ -81,6 +81,15 @@ function script_update(settings)
   current_settings = settings
 end
 
+-- Auto-run on OBS startup if a game ID is already configured
+function script_load(settings)
+  current_settings = settings
+  local game_id = obs.obs_data_get_string(settings, "game_id")
+  if game_id ~= "" then
+    add_or_update_source()
+  end
+end
+
 -- ── Helpers ───────────────────────────────────────────────────────────────────
 -- Convert OBS ABGR int to a 6-char hex string (without #)
 -- Uses LuaJIT bit library (Lua 5.1 — OBS does not support Lua 5.3 bitwise ops)
