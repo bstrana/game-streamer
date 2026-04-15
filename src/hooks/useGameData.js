@@ -44,14 +44,41 @@ function normalise(raw) {
   const r3 = Boolean(Number(sit.runner3 ?? 0));
 
   // ── Players (situation) ──────────────────────────────────────────────────
-  const batterName    = sit.nbatter  ?? sit.batter  ?? '';
-  const batterAvg     = sit.batting  ?? sit.avg     ?? '';
-  const pitcherName   = sit.pitcher  ?? '';
-  // WBSC uses various keys for pitch count; also check top-level raw.pitcher object
-  const pitcherObj = (typeof raw.pitcher === 'object' && raw.pitcher !== null) ? raw.pitcher : {};
-  const _pp = sit.pitches ?? sit.np ?? sit.pc ?? sit.pitchcount ?? sit.totalp ?? sit.numpitches
-           ?? pitcherObj.pitches ?? pitcherObj.np ?? pitcherObj.pc ?? pitcherObj.pitchcount ?? null;
-  const pitcherPitches = _pp !== null ? Number(_pp) : null;
+  const batterName  = sit.nbatter ?? sit.batter ?? '';
+  const batterAvg   = sit.batting ?? sit.avg    ?? '';
+  const pitcherName = sit.pitcher ?? '';
+
+  // Pitch count: WBSC stores it as PITCHES (uppercase) on the player entry
+  // keyed by sit.pitcherid inside a player-collection object in the raw payload.
+  // We search common collection keys; fall back to situation-level keys.
+  const pitcherid = String(sit.pitcherid ?? sit.pitcher_id ?? '');
+  let pitcherPitches = null;
+
+  if (pitcherid) {
+    const PLAYER_COLLECTIONS = [
+      'players', 'awayplayers', 'homeplayers',
+      'lineup',  'awaylineup',  'homelineup',
+      'roster',  'awayroster',  'homeroster',
+    ];
+    for (const key of PLAYER_COLLECTIONS) {
+      const col = raw[key];
+      if (!col || typeof col !== 'object') continue;
+      // The collection is a dict keyed by player/roster ID
+      const entry = col[pitcherid]
+        ?? Object.values(col).find(p => p && String(p.playerid) === pitcherid);
+      if (entry) {
+        // WBSC uses uppercase PITCHES on the player stats entry
+        const pp = entry.PITCHES ?? entry.pitches ?? entry.np ?? entry.pc ?? null;
+        if (pp !== null) { pitcherPitches = Number(pp); }
+        break;
+      }
+    }
+  }
+  // Last-resort: situation-level keys (older / different feed formats)
+  if (pitcherPitches === null) {
+    const _pp = sit.pitches ?? sit.np ?? sit.pc ?? sit.pitchcount ?? sit.totalp ?? null;
+    if (_pp !== null) pitcherPitches = Number(_pp);
+  }
 
   // ── Play description (first entry in playdata) ───────────────────────────
   const playDesc = raw.playdata?.[0]?.n?.trim() ?? '';
