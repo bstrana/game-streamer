@@ -1,7 +1,12 @@
 /**
  * Overlay styles — optimised for OBS browser source (1920×1080)
- * White background, dark scoreboard panel.
+ * Transparent background, dark scoreboard panel.
  */
+
+/* Force transparent body for OBS browser source */
+html, body {
+  background: transparent !important;
+}
 
 .overlay-root {
   position: fixed;
