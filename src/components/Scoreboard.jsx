@@ -81,80 +81,131 @@ export default function Scoreboard({ gameData, match }) {
         </div>
       )}
 
-      <div className="sb-main">
+      {match.replay ? (
+        /* ── Replay: 4-column inline layout ──────────────────────────── */
+        <div className="sb-main-replay">
 
-        {/* ── Left: stacked team rows ───────────────────────────────── */}
-        <div className="sb-teams">
-          <div className="sb-row" style={{ background: awayBg }}>
-            <div className="sb-team-left">
-              {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
-              <div className="sb-team-info">
-                <span className="sb-abbr">{awayAbbr}</span>
-                {(awayFull && awayFull !== awayAbbr) && (
-                  <span className="sb-city">{awayFull}</span>
-                )}
-              </div>
-            </div>
-            <div className="sb-score">{scoreAway}</div>
+          {/* Col 1: Away team + score */}
+          <div className="sb-replay-team" style={{ background: awayBg }}>
+            {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
+            <span className="sb-abbr">{awayAbbr}</span>
+            <div className="sb-replay-score">{scoreAway}</div>
           </div>
 
-          <div className="sb-row-divider" />
+          <div className="sb-col-divider" />
 
-          <div className="sb-row" style={{ background: homeBg }}>
-            <div className="sb-team-left">
-              {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
-              <div className="sb-team-info">
-                <span className="sb-abbr">{homeAbbr}</span>
-                {(homeFull && homeFull !== homeAbbr) && (
-                  <span className="sb-city">{homeFull}</span>
-                )}
-              </div>
-            </div>
-            <div className="sb-score">{scoreHome}</div>
-          </div>
-        </div>
-
-        {/* ── Right: status + inning + count + diamond ─────────────── */}
-        <div className="sb-col-divider" />
-        <div className="sb-side">
-
-          {/* Status */}
-          {isLive && !match.replay && (
-            <div className="sb-live-row">
-              <span className="sb-live-dot" />
-              <span className="sb-live-text">LIVE</span>
-            </div>
-          )}
-          {match.replay && <div className="sb-replay-text">REPLAY</div>}
-          {isFinal && <div className="sb-final-text">FINAL</div>}
-
-          {/* Inning */}
-          <div className="sb-inning-row">
-            <span className="sb-inn-num">{inning}</span>
-            <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
+          {/* Col 2: Home team + score */}
+          <div className="sb-replay-team" style={{ background: homeBg }}>
+            {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
+            <span className="sb-abbr">{homeAbbr}</span>
+            <div className="sb-replay-score">{scoreHome}</div>
           </div>
 
-          {/* Count (B·S + outs) alongside diamond */}
-          <div className="sb-count-diamond">
-            <div className="sb-count">
-              <div className="sb-bs-nums">
-                <span className="sb-bs-val ball-val">{balls}</span>
-                <span className="sb-bs-sep">·</span>
-                <span className="sb-bs-val strike-val">{strikes}</span>
-              </div>
-              <div className="sb-outs-dots">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
-                ))}
-              </div>
+          <div className="sb-col-divider" />
+
+          {/* Col 3: Status / inning / B·S / outs */}
+          <div className="sb-replay-status">
+            <div className="sb-replay-text">REPLAY</div>
+            <div className="sb-inning-row">
+              <span className="sb-inn-num">{inning}</span>
+              <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
             </div>
-            <div className="sb-side-diamond">
-              <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+            <div className="sb-bs-nums">
+              <span className="sb-bs-val ball-val">{balls}</span>
+              <span className="sb-bs-sep">·</span>
+              <span className="sb-bs-val strike-val">{strikes}</span>
             </div>
+            <div className="sb-outs-dots">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
+              ))}
+            </div>
+          </div>
+
+          <div className="sb-col-divider" />
+
+          {/* Col 4: Bases diamond */}
+          <div className="sb-replay-diamond">
+            <DiamondDisplay r1={r1} r2={r2} r3={r3} />
           </div>
 
         </div>
-      </div>
+      ) : (
+        /* ── Live / Final: stacked layout ────────────────────────────── */
+        <div className="sb-main">
+
+          {/* Left: stacked team rows */}
+          <div className="sb-teams">
+            <div className="sb-row" style={{ background: awayBg }}>
+              <div className="sb-team-left">
+                {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
+                <div className="sb-team-info">
+                  <span className="sb-abbr">{awayAbbr}</span>
+                  {(awayFull && awayFull !== awayAbbr) && (
+                    <span className="sb-city">{awayFull}</span>
+                  )}
+                </div>
+              </div>
+              <div className="sb-score">{scoreAway}</div>
+            </div>
+
+            <div className="sb-row-divider" />
+
+            <div className="sb-row" style={{ background: homeBg }}>
+              <div className="sb-team-left">
+                {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
+                <div className="sb-team-info">
+                  <span className="sb-abbr">{homeAbbr}</span>
+                  {(homeFull && homeFull !== homeAbbr) && (
+                    <span className="sb-city">{homeFull}</span>
+                  )}
+                </div>
+              </div>
+              <div className="sb-score">{scoreHome}</div>
+            </div>
+          </div>
+
+          {/* Right: status + inning + count + diamond */}
+          <div className="sb-col-divider" />
+          <div className="sb-side">
+
+            {/* Status */}
+            {isLive && (
+              <div className="sb-live-row">
+                <span className="sb-live-dot" />
+                <span className="sb-live-text">LIVE</span>
+              </div>
+            )}
+            {isFinal && <div className="sb-final-text">FINAL</div>}
+
+            {/* Inning */}
+            <div className="sb-inning-row">
+              <span className="sb-inn-num">{inning}</span>
+              <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
+            </div>
+
+            {/* Count (B·S + outs) alongside diamond */}
+            <div className="sb-count-diamond">
+              <div className="sb-count">
+                <div className="sb-bs-nums">
+                  <span className="sb-bs-val ball-val">{balls}</span>
+                  <span className="sb-bs-sep">·</span>
+                  <span className="sb-bs-val strike-val">{strikes}</span>
+                </div>
+                <div className="sb-outs-dots">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
+                  ))}
+                </div>
+              </div>
+              <div className="sb-side-diamond">
+                <DiamondDisplay r1={r1} r2={r2} r3={r3} />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* ── Bottom bar: batter ───────────────────────────────────────── */}
       {(isLive || match.replay) && batterName && (
