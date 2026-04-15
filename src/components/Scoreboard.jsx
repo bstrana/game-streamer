@@ -107,11 +107,6 @@ export default function Scoreboard({ gameData, match }) {
           <div className="sb-replay-status">
             <div className="sb-replay-srow">
               <div className="sb-replay-text">REPLAY</div>
-              <div className="sb-bs-nums">
-                <span className="sb-bs-val ball-val">{balls}</span>
-                <span className="sb-bs-sep">·</span>
-                <span className="sb-bs-val strike-val">{strikes}</span>
-              </div>
             </div>
             <div className="sb-replay-srow">
               <div className="sb-inning-row">
@@ -122,6 +117,11 @@ export default function Scoreboard({ gameData, match }) {
                 {Array.from({ length: 2 }).map((_, i) => (
                   <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
                 ))}
+              </div>
+              <div className="sb-bs-nums">
+                <span className="sb-bs-val ball-val">{balls}</span>
+                <span className="sb-bs-sep">·</span>
+                <span className="sb-bs-val strike-val">{strikes}</span>
               </div>
             </div>
           </div>
