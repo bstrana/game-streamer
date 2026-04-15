@@ -43,13 +43,25 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  background: rgba(18, 20, 28, 0.94);
-  border-radius: 8px;
+  background: rgba(6, 8, 14, 0.97);   /* outer frame — near-black */
+  border-radius: 10px;
   overflow: hidden;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   color: #f1f5f9;
   box-shadow: 0 6px 32px rgba(0,0,0,.75);
   min-width: 280px;
+  padding: 3px;
+  gap: 3px;
+}
+
+/* ── Inner content wrapper — sits inside the outer frame ───────────────── */
+.sb-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: rgba(18, 20, 28, 0.97); /* inner panel — dark navy */
+  border-radius: 7px;
+  overflow: hidden;
 }
 
 /* ── Main row (teams + side panel) ─────────────────────────────────────── */

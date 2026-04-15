@@ -12,41 +12,43 @@ export default function Scoreboard({ gameData, match }) {
   if (!gameData) {
     return (
       <div className="scoreboard">
-        <div className="sb-main">
-          <div className="sb-teams">
-            <div className="sb-row" style={{ background: awayBg }}>
-              <div className="sb-team-left">
-                {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
-                <div className="sb-team-info">
-                  <span className="sb-abbr">{match.awayTeam || 'Away'}</span>
+        <div className="sb-inner">
+          <div className="sb-main">
+            <div className="sb-teams">
+              <div className="sb-row" style={{ background: awayBg }}>
+                <div className="sb-team-left">
+                  {match.awayLogoUrl && <img className="sb-team-logo" src={match.awayLogoUrl} alt="" />}
+                  <div className="sb-team-info">
+                    <span className="sb-abbr">{match.awayTeam || 'Away'}</span>
+                  </div>
                 </div>
+                <div className="sb-score">—</div>
               </div>
-              <div className="sb-score">—</div>
-            </div>
-            <div className="sb-row-divider" />
-            <div className="sb-row" style={{ background: homeBg }}>
-              <div className="sb-team-left">
-                {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
-                <div className="sb-team-info">
-                  <span className="sb-abbr">{match.homeTeam || 'Home'}</span>
+              <div className="sb-row-divider" />
+              <div className="sb-row" style={{ background: homeBg }}>
+                <div className="sb-team-left">
+                  {match.homeLogoUrl && <img className="sb-team-logo" src={match.homeLogoUrl} alt="" />}
+                  <div className="sb-team-info">
+                    <span className="sb-abbr">{match.homeTeam || 'Home'}</span>
+                  </div>
                 </div>
+                <div className="sb-score">—</div>
               </div>
-              <div className="sb-score">—</div>
             </div>
-          </div>
-          <div className="sb-col-divider" />
-          <div className="sb-side">
-            <div className="sb-scheduled-label">SCH</div>
-            {match.time && !isNaN(new Date(match.time).getTime()) && (
-              <div className="sb-scheduled-time">
-                {new Intl.DateTimeFormat(undefined, {
-                  month: 'short', day: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                }).format(new Date(match.time))}
+            <div className="sb-col-divider" />
+            <div className="sb-side">
+              <div className="sb-scheduled-label">SCH</div>
+              {match.time && !isNaN(new Date(match.time).getTime()) && (
+                <div className="sb-scheduled-time">
+                  {new Intl.DateTimeFormat(undefined, {
+                    month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  }).format(new Date(match.time))}
+                </div>
+              )}
+              <div className="sb-side-diamond">
+                <DiamondDisplay r1={false} r2={false} r3={false} />
               </div>
-            )}
-            <div className="sb-side-diamond">
-              <DiamondDisplay r1={false} r2={false} r3={false} />
             </div>
           </div>
         </div>
@@ -71,6 +73,7 @@ export default function Scoreboard({ gameData, match }) {
 
   return (
     <div className="scoreboard">
+      <div className="sb-inner">
 
       {/* ── Top bar: pitcher ─────────────────────────────────────────── */}
       {(isLive || match.replay) && pitcherName && (
@@ -225,6 +228,7 @@ export default function Scoreboard({ gameData, match }) {
         </div>
       )}
 
+      </div>
     </div>
   );
 }
