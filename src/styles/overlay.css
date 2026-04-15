@@ -343,3 +343,45 @@
   font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   margin-left: auto;
 }
+
+/* ── Replay inline layout ────────────────────────────────────────────────── */
+.sb-main-replay {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.sb-replay-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  gap: 3px;
+  min-width: 80px;
+}
+
+.sb-replay-score {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.sb-replay-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  gap: 4px;
+}
+
+.sb-replay-diamond {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+}
