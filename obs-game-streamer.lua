@@ -81,13 +81,12 @@ function script_update(settings)
   current_settings = settings
 end
 
--- Auto-run on OBS startup if a game ID is already configured
+-- Register a Tools menu item on load
 function script_load(settings)
   current_settings = settings
-  local game_id = obs.obs_data_get_string(settings, "game_id")
-  if game_id ~= "" then
+  obs.obs_frontend_add_tools_menu_item("Game Streamer: Update Scoreboard", function()
     add_or_update_source()
-  end
+  end)
 end
 
 -- ── Helpers ───────────────────────────────────────────────────────────────────
