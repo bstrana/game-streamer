@@ -348,40 +348,50 @@
 .sb-main-replay {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;
 }
 
+/* Team col: [logo] ABBR  SCORE — horizontal, vertically centred */
 .sb-replay-team {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  gap: 3px;
-  min-width: 80px;
+  padding: 8px 14px;
+  gap: 8px;
+  align-self: stretch;
 }
 
 .sb-replay-score {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -.04em;
   font-variant-numeric: tabular-nums;
   color: #fff;
+  margin-left: 6px;
 }
 
+/* Status col: two sub-rows stacked, vertically centred */
 .sb-replay-status {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px 14px;
-  gap: 4px;
+  padding: 6px 14px;
+  gap: 5px;
+}
+
+/* Each sub-row inside status: items side by side */
+.sb-replay-srow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .sb-replay-diamond {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
+  padding: 6px 12px;
 }
