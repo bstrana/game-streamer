@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import MatchEdit from './pages/MatchEdit';
 import Overlay from './pages/Overlay';
+import OverlayDirect from './pages/OverlayDirect';
 
 function LoadingScreen() {
   return (
@@ -31,6 +32,7 @@ function AppRoutes() {
     <BrowserRouter>
       <Routes>
         {/* ── Public: OBS overlay (no auth required) ── */}
+        <Route path="/overlay/game/:gameId" element={<OverlayDirect />} />
         <Route path="/overlay/:matchId" element={<Overlay />} />
 
         {/* ── Protected: management UI ── */}
