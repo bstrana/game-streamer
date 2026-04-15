@@ -4,7 +4,7 @@
   "author": "bstrana",
   "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
   "tagline": "Baseball scoreboard overlay for OBS streaming",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "manifestVersion": 2,
   "minBoxVersion": "9.1.0",
   "website": "https://github.com/bstrana/game-streamer",
@@ -36,7 +36,7 @@
   "mediaLinks": [
     "https://bstrana.sirv.com/ybc/ybc-logo.png"
   ],
-  "changelog": "OBS script: local file picker for team logos, default browser source height 240, Tools menu item deferred to after OBS frontend load; overlay scoreboard team logo enlarged to 52px and abbreviation font to 24px.",
+  "changelog": "Server-side game settings API: app auto-pushes match settings on save; OBS script fetches team names, colours, and logos by game ID with one click. Fix OBS colour channel swap (R/B were inverted in overlay).",
   "packagerName": "bstrana",
   "packagerUrl": "https://github.com/bstrana"
 }
