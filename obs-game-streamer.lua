@@ -119,12 +119,56 @@ local function url_encode(str)
   end)
 end
 
--- Convert a local file path to a file:// URL encoded for use as a query param
+-- ── Base64 encoder ───────────────────────────────────────────────────────────
+-- OBS uses LuaJIT (Lua 5.1) — uses bit library for bitwise ops.
+local _b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+local function base64_encode(data)
+  local out = {}
+  local n = #data
+  local i = 1
+  while i <= n - 2 do
+    local a, b, c = data:byte(i, i + 2)
+    local v = a * 65536 + b * 256 + c
+    out[#out+1] = _b64chars:sub(bit.rshift(v, 18)                    + 1, bit.rshift(v, 18)                    + 1)
+    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v, 12), 63)      + 1, bit.band(bit.rshift(v, 12), 63)      + 1)
+    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v,  6), 63)      + 1, bit.band(bit.rshift(v,  6), 63)      + 1)
+    out[#out+1] = _b64chars:sub(bit.band(v, 63)                      + 1, bit.band(v, 63)                      + 1)
+    i = i + 3
+  end
+  if i == n then          -- 1 remaining byte
+    local v = data:byte(i) * 65536
+    out[#out+1] = _b64chars:sub(bit.rshift(v, 18)               + 1, bit.rshift(v, 18)               + 1)
+    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v, 12), 63) + 1, bit.band(bit.rshift(v, 12), 63) + 1)
+    out[#out+1] = '=='
+  elseif i == n - 1 then  -- 2 remaining bytes
+    local v = data:byte(i) * 65536 + data:byte(i + 1) * 256
+    out[#out+1] = _b64chars:sub(bit.rshift(v, 18)               + 1, bit.rshift(v, 18)               + 1)
+    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v, 12), 63) + 1, bit.band(bit.rshift(v, 12), 63) + 1)
+    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v,  6), 63) + 1, bit.band(bit.rshift(v,  6), 63) + 1)
+    out[#out+1] = '='
+  end
+  return table.concat(out)
+end
+
+local _mime = { png='image/png', jpg='image/jpeg', jpeg='image/jpeg',
+                gif='image/gif', svg='image/svg+xml', webp='image/webp' }
+
+-- Read a local image file and return a data: URL encoded for a query param.
+-- OBS browser source (CEF) blocks file:// URLs, but data: URLs work fine.
 local function path_to_logo_param(path)
   if path == nil or path == "" then return "" end
-  path = path:gsub("\\", "/")                  -- normalise backslashes
-  local file_url = "file:///" .. path:gsub("^/+", "")
-  return url_encode(file_url)                  -- encode for query string
+  local f = io.open(path, "rb")
+  if not f then
+    obs.script_log(obs.LOG_WARNING, "Game Streamer: logo file not found: " .. path)
+    return ""
+  end
+  local data = f:read("*a")
+  f:close()
+  local ext  = (path:match("%.(%w+)$") or "png"):lower()
+  local mime = _mime[ext] or "image/png"
+  local data_url = "data:" .. mime .. ";base64," .. base64_encode(data)
+  return url_encode(data_url)
 end
 
 local function build_url(s)
