@@ -83,11 +83,21 @@ function script_update(settings)
   current_settings = settings
 end
 
--- Register a Tools menu item on load
+-- Called when the Tools menu item is clicked
+local function on_tools_menu()
+  add_or_update_source()
+end
+
 function script_load(settings)
   current_settings = settings
-  obs.obs_frontend_add_tools_menu_item("Game Streamer: Update Scoreboard", function()
-    add_or_update_source()
+  -- Defer menu registration until OBS has finished building its frontend.
+  -- Calling obs_frontend_add_tools_menu_item too early (before
+  -- OBS_FRONTEND_EVENT_FINISHED_LOADING) results in a no-op.
+  obs.obs_frontend_add_event_callback(function(event)
+    if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING then
+      obs.obs_frontend_add_tools_menu_item(
+        "Game Streamer: Update Scoreboard", on_tools_menu)
+    end
   end)
 end
 
