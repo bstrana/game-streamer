@@ -56,6 +56,7 @@ function normalise(raw) {
 
   if (pitcherid) {
     const PLAYER_COLLECTIONS = [
+      'boxscore',
       'players', 'awayplayers', 'homeplayers',
       'lineup',  'awaylineup',  'homelineup',
       'roster',  'awayroster',  'homeroster',
