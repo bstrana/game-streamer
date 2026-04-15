@@ -47,7 +47,10 @@ function normalise(raw) {
   const batterName    = sit.nbatter  ?? sit.batter  ?? '';
   const batterAvg     = sit.batting  ?? sit.avg     ?? '';
   const pitcherName   = sit.pitcher  ?? '';
-  const _pp = sit.pitches ?? sit.pitchcount ?? sit.totalp ?? sit.numpitches ?? null;
+  // WBSC uses various keys for pitch count; also check top-level raw.pitcher object
+  const pitcherObj = (typeof raw.pitcher === 'object' && raw.pitcher !== null) ? raw.pitcher : {};
+  const _pp = sit.pitches ?? sit.np ?? sit.pc ?? sit.pitchcount ?? sit.totalp ?? sit.numpitches
+           ?? pitcherObj.pitches ?? pitcherObj.np ?? pitcherObj.pc ?? pitcherObj.pitchcount ?? null;
   const pitcherPitches = _pp !== null ? Number(_pp) : null;
 
   // ── Play description (first entry in playdata) ───────────────────────────

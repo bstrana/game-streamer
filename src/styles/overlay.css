@@ -329,6 +329,7 @@
   color: #e2e8f0;
   text-transform: uppercase;
   letter-spacing: .02em;
+  text-align: right;
   flex: 1;
   min-width: 0;
   overflow: hidden;
