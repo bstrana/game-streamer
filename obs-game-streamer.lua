@@ -173,9 +173,9 @@ end
 
 local function build_url(s)
   local base      = obs.obs_data_get_string(s, "app_url"):gsub("/+$", "")
-  local game_id   = obs.obs_data_get_string(s, "game_id")
-  local away      = obs.obs_data_get_string(s, "away")
-  local home      = obs.obs_data_get_string(s, "home")
+  local game_id   = url_encode(obs.obs_data_get_string(s, "game_id"))
+  local away      = url_encode(obs.obs_data_get_string(s, "away"))
+  local home      = url_encode(obs.obs_data_get_string(s, "home"))
   local c1        = color_to_hex(obs.obs_data_get_int(s, "away_color"))
   local c2        = color_to_hex(obs.obs_data_get_int(s, "away_color2"))
   local away_logo = path_to_logo_param(obs.obs_data_get_string(s, "away_logo"))
@@ -210,12 +210,17 @@ function add_or_update_source()
   local width  = obs.obs_data_get_int(current_settings, "width")
   local height = obs.obs_data_get_int(current_settings, "height")
 
+  -- Log a readable summary (skip logo data blobs which can be hundreds of KB)
+  local base = obs.obs_data_get_string(current_settings, "app_url"):gsub("/+$", "")
+  local gid  = obs.obs_data_get_string(current_settings, "game_id")
+  obs.script_log(obs.LOG_INFO, string.format(
+    "Game Streamer: %s/overlay/game/%s  [%dx%d]", base, gid, width, height))
+
   -- Build browser-source settings
   local browser_settings = obs.obs_data_create()
   obs.obs_data_set_string(browser_settings, "url",    url)
   obs.obs_data_set_int(browser_settings,    "width",  width)
   obs.obs_data_set_int(browser_settings,    "height", height)
-  obs.obs_data_set_bool(browser_settings,   "css",    false)
   obs.obs_data_set_bool(browser_settings,   "shutdown_on_scene_switch", false)
 
   -- Try to find an existing source with this name
@@ -223,7 +228,7 @@ function add_or_update_source()
   if existing then
     obs.obs_source_update(existing, browser_settings)
     obs.obs_source_release(existing)
-    obs.script_log(obs.LOG_INFO, "Updated source: " .. url)
+    obs.script_log(obs.LOG_INFO, "Game Streamer: updated existing source.")
   else
     -- Create new source and add to current scene
     local source = obs.obs_source_create("browser_source", SOURCE_NAME, browser_settings, nil)
@@ -234,7 +239,7 @@ function add_or_update_source()
       obs.obs_source_release(scene_src)
     end
     obs.obs_source_release(source)
-    obs.script_log(obs.LOG_INFO, "Created source: " .. url)
+    obs.script_log(obs.LOG_INFO, "Game Streamer: created new source in current scene.")
   end
 
   obs.obs_data_release(browser_settings)
