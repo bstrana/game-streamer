@@ -17,7 +17,7 @@
       ?away={Away abbr}&home={Home abbr}
       &awayColor={hex}&awayColor2={hex}
       &homeColor={hex}&homeColor2={hex}
-      &awayLogo={url}&homeLogo={url}
+      &awayLogo={public image URL}&homeLogo={public image URL}
       &replay={0|1}
 ]]
 
@@ -41,12 +41,10 @@ function script_properties()
   obs.obs_properties_add_text(props, "home",       "Home abbreviation",    obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_color(props, "away_color",  "Away primary colour")
   obs.obs_properties_add_color(props, "away_color2", "Away secondary colour")
-  obs.obs_properties_add_path(props, "away_logo", "Away logo file",
-    obs.OBS_PATH_FILE, "Image files (*.png *.jpg *.jpeg *.gif *.svg *.webp)", nil)
+  obs.obs_properties_add_text(props, "away_logo",  "Away logo URL",  obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_color(props, "home_color",  "Home primary colour")
   obs.obs_properties_add_color(props, "home_color2", "Home secondary colour")
-  obs.obs_properties_add_path(props, "home_logo", "Home logo file",
-    obs.OBS_PATH_FILE, "Image files (*.png *.jpg *.jpeg *.gif *.svg *.webp)", nil)
+  obs.obs_properties_add_text(props, "home_logo",  "Home logo URL",  obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_bool(props,  "replay",    "Replay mode")
   obs.obs_properties_add_int(props,   "width",     "Width",  320, 3840, 1)
   obs.obs_properties_add_int(props,   "height",    "Height", 100, 2160, 1)
@@ -119,58 +117,6 @@ local function url_encode(str)
   end)
 end
 
--- ── Base64 encoder ───────────────────────────────────────────────────────────
--- OBS uses LuaJIT (Lua 5.1) — uses bit library for bitwise ops.
-local _b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-
-local function base64_encode(data)
-  local out = {}
-  local n = #data
-  local i = 1
-  while i <= n - 2 do
-    local a, b, c = data:byte(i, i + 2)
-    local v = a * 65536 + b * 256 + c
-    out[#out+1] = _b64chars:sub(bit.rshift(v, 18)                    + 1, bit.rshift(v, 18)                    + 1)
-    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v, 12), 63)      + 1, bit.band(bit.rshift(v, 12), 63)      + 1)
-    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v,  6), 63)      + 1, bit.band(bit.rshift(v,  6), 63)      + 1)
-    out[#out+1] = _b64chars:sub(bit.band(v, 63)                      + 1, bit.band(v, 63)                      + 1)
-    i = i + 3
-  end
-  if i == n then          -- 1 remaining byte
-    local v = data:byte(i) * 65536
-    out[#out+1] = _b64chars:sub(bit.rshift(v, 18)               + 1, bit.rshift(v, 18)               + 1)
-    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v, 12), 63) + 1, bit.band(bit.rshift(v, 12), 63) + 1)
-    out[#out+1] = '=='
-  elseif i == n - 1 then  -- 2 remaining bytes
-    local v = data:byte(i) * 65536 + data:byte(i + 1) * 256
-    out[#out+1] = _b64chars:sub(bit.rshift(v, 18)               + 1, bit.rshift(v, 18)               + 1)
-    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v, 12), 63) + 1, bit.band(bit.rshift(v, 12), 63) + 1)
-    out[#out+1] = _b64chars:sub(bit.band(bit.rshift(v,  6), 63) + 1, bit.band(bit.rshift(v,  6), 63) + 1)
-    out[#out+1] = '='
-  end
-  return table.concat(out)
-end
-
-local _mime = { png='image/png', jpg='image/jpeg', jpeg='image/jpeg',
-                gif='image/gif', svg='image/svg+xml', webp='image/webp' }
-
--- Read a local image file and return a data: URL encoded for a query param.
--- OBS browser source (CEF) blocks file:// URLs, but data: URLs work fine.
-local function path_to_logo_param(path)
-  if path == nil or path == "" then return "" end
-  local f = io.open(path, "rb")
-  if not f then
-    obs.script_log(obs.LOG_WARNING, "Game Streamer: logo file not found: " .. path)
-    return ""
-  end
-  local data = f:read("*a")
-  f:close()
-  local ext  = (path:match("%.(%w+)$") or "png"):lower()
-  local mime = _mime[ext] or "image/png"
-  local data_url = "data:" .. mime .. ";base64," .. base64_encode(data)
-  return url_encode(data_url)
-end
-
 local function build_url(s)
   local base      = obs.obs_data_get_string(s, "app_url"):gsub("/+$", "")
   local game_id   = url_encode(obs.obs_data_get_string(s, "game_id"))
@@ -178,10 +124,10 @@ local function build_url(s)
   local home      = url_encode(obs.obs_data_get_string(s, "home"))
   local c1        = color_to_hex(obs.obs_data_get_int(s, "away_color"))
   local c2        = color_to_hex(obs.obs_data_get_int(s, "away_color2"))
-  local away_logo = path_to_logo_param(obs.obs_data_get_string(s, "away_logo"))
+  local away_logo = url_encode(obs.obs_data_get_string(s, "away_logo"))
   local c3        = color_to_hex(obs.obs_data_get_int(s, "home_color"))
   local c4        = color_to_hex(obs.obs_data_get_int(s, "home_color2"))
-  local home_logo = path_to_logo_param(obs.obs_data_get_string(s, "home_logo"))
+  local home_logo = url_encode(obs.obs_data_get_string(s, "home_logo"))
   local replay    = obs.obs_data_get_bool(s, "replay") and "1" or "0"
 
   local url = string.format(
