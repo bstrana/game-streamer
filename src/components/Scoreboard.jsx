@@ -113,15 +113,15 @@ export default function Scoreboard({ gameData, match }) {
                 <span className="sb-inn-num">{inning}</span>
                 <span className="sb-inn-arrow">{isTop ? '▲' : '▼'}</span>
               </div>
-              <div className="sb-bs-nums">
-                <span className="sb-bs-val ball-val">{balls}</span>
-                <span className="sb-bs-sep">·</span>
-                <span className="sb-bs-val strike-val">{strikes}</span>
-              </div>
               <div className="sb-outs-dots">
                 {Array.from({ length: 2 }).map((_, i) => (
                   <span key={i} className={`dot ${i < outs ? 'dot-out' : 'dot-empty'}`} />
                 ))}
+              </div>
+              <div className="sb-bs-nums">
+                <span className="sb-bs-val ball-val">{balls}</span>
+                <span className="sb-bs-sep">·</span>
+                <span className="sb-bs-val strike-val">{strikes}</span>
               </div>
             </div>
           </div>
