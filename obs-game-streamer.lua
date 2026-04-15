@@ -28,7 +28,12 @@ local bit = require("bit")
 function script_description()
   return [[<h3>Game Streamer Scoreboard</h3>
 <p>Creates or updates a Browser Source for a WBSC baseball scoreboard overlay.</p>
-<p>Fill in the fields below and click <b>Add / Update Source</b>.</p>]]
+<ol>
+  <li>Enter the <b>App URL</b> and <b>Game ID</b>.</li>
+  <li>Click <b>Fetch Settings from App</b> to auto-fill team names, colours, and logos
+      (the game must have been saved in the Game Streamer app first).</li>
+  <li>Click <b>Add / Update Source</b> to apply.</li>
+</ol>]]
 end
 
 -- ── Settings definition ───────────────────────────────────────────────────────
@@ -37,6 +42,13 @@ function script_properties()
 
   obs.obs_properties_add_text(props, "app_url",    "App URL",              obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_text(props, "game_id",    "Game ID",              obs.OBS_TEXT_DEFAULT)
+
+  obs.obs_properties_add_button(props, "btn_fetch", "↓  Fetch Settings from App",
+    function(_, _)
+      fetch_game_settings()
+      return true  -- tell OBS to re-read settings and refresh the UI
+    end)
+
   obs.obs_properties_add_text(props, "away",       "Away abbreviation",    obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_text(props, "home",       "Home abbreviation",    obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_color(props, "away_color",  "Away primary colour")
@@ -100,13 +112,77 @@ function script_load(settings)
 end
 
 -- ── Helpers ───────────────────────────────────────────────────────────────────
--- Convert OBS ABGR int to a 6-char hex string (without #)
--- Uses LuaJIT bit library (Lua 5.1 — OBS does not support Lua 5.3 bitwise ops)
-local function color_to_hex(abgr)
-  local r = bit.band(abgr, 0xFF)
-  local g = bit.band(bit.rshift(abgr, 8),  0xFF)
-  local b = bit.band(bit.rshift(abgr, 16), 0xFF)
+-- OBS stores colours as ARGB: bits 24-31 = alpha, 16-23 = red, 8-15 = green, 0-7 = blue.
+-- Uses LuaJIT bit library (Lua 5.1 — OBS does not support Lua 5.3 bitwise ops).
+
+-- Convert OBS ARGB int → 6-char rrggbb hex string (without #)
+local function color_to_hex(argb)
+  local r = bit.band(bit.rshift(argb, 16), 0xFF)
+  local g = bit.band(bit.rshift(argb,  8), 0xFF)
+  local b = bit.band(argb, 0xFF)
   return string.format("%02x%02x%02x", r, g, b)
+end
+
+-- Convert a CSS #rrggbb hex string → OBS ARGB int (alpha = 0xFF)
+local function hex_to_obs(hex)
+  hex = (hex or ''):gsub('^#', ''):lower()
+  if #hex < 6 then return 0xFF808080 end
+  local r = tonumber(hex:sub(1, 2), 16) or 128
+  local g = tonumber(hex:sub(3, 4), 16) or 128
+  local b = tonumber(hex:sub(5, 6), 16) or 128
+  return 0xFF000000 + r * 65536 + g * 256 + b
+end
+
+-- Extract a string value from a flat JSON object
+local function json_str(s, key)
+  return (s:match('"' .. key .. '"%s*:%s*"(.-)"') or ''):gsub('\\/', '/')
+end
+
+-- Extract a boolean value from a flat JSON object
+local function json_bool(s, key)
+  return s:match('"' .. key .. '"%s*:%s*(true)') == 'true'
+end
+
+-- ── Fetch game settings from the Game Streamer app ────────────────────────────
+local function fetch_game_settings()
+  if not current_settings then return end
+  local base    = obs.obs_data_get_string(current_settings, 'app_url'):gsub('/+$', '')
+  local game_id = obs.obs_data_get_string(current_settings, 'game_id')
+  if game_id == '' then
+    obs.script_log(obs.LOG_WARNING, 'Game Streamer: enter a Game ID before fetching.')
+    return
+  end
+
+  local url    = base .. '/api/game-settings/' .. game_id
+  local handle = io.popen(string.format('curl -s --max-time 8 "%s"', url))
+  if not handle then
+    obs.script_log(obs.LOG_WARNING,
+      'Game Streamer: curl not available — install curl to use Fetch Settings.')
+    return
+  end
+  local resp = handle:read('*a')
+  handle:close()
+
+  if not resp or resp == '' or resp:find('"error"') then
+    obs.script_log(obs.LOG_WARNING,
+      'Game Streamer: no settings for game ' .. game_id
+      .. ' — save the match in the app first.')
+    return
+  end
+
+  local away = json_str(resp, 'away')
+  local home = json_str(resp, 'home')
+  if away ~= '' then obs.obs_data_set_string(current_settings, 'away', away) end
+  if home ~= '' then obs.obs_data_set_string(current_settings, 'home', home) end
+  obs.obs_data_set_int(current_settings,    'away_color',  hex_to_obs(json_str(resp, 'awayColor')))
+  obs.obs_data_set_int(current_settings,    'away_color2', hex_to_obs(json_str(resp, 'awayColor2')))
+  obs.obs_data_set_string(current_settings, 'away_logo',   json_str(resp, 'awayLogo'))
+  obs.obs_data_set_int(current_settings,    'home_color',  hex_to_obs(json_str(resp, 'homeColor')))
+  obs.obs_data_set_int(current_settings,    'home_color2', hex_to_obs(json_str(resp, 'homeColor2')))
+  obs.obs_data_set_string(current_settings, 'home_logo',   json_str(resp, 'homeLogo'))
+  obs.obs_data_set_bool(current_settings,   'replay',      json_bool(resp, 'replay'))
+  obs.script_log(obs.LOG_INFO,
+    'Game Streamer: loaded settings for game ' .. game_id)
 end
 
 -- Percent-encode a string for use inside a URL query parameter value

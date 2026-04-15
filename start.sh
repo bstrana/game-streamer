@@ -49,4 +49,8 @@ window.__APP_CONFIG__ = {
 };
 EOF
 
+# ── Game-settings API (for OBS script integration) ───────────────────────
+mkdir -p /app/data/game-settings
+python3 /app/api.py &
+
 exec nginx -g 'daemon off;'

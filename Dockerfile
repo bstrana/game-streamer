@@ -27,16 +27,20 @@ RUN npm run build
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────
 FROM nginx:1.27-alpine
 
+# python3 — used by the game-settings API server (stdlib only, no pip deps)
+RUN apk add --no-cache python3
+
 # Redirect nginx PID file to /tmp (Cloudron read-only filesystem)
 RUN sed -i 's|/var/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf
 
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy built SPA, nginx server config, and entrypoint
+# Copy built SPA, nginx server config, entrypoint, and API server
 COPY --from=builder /build/dist /app/dist
 COPY nginx.conf /etc/nginx/conf.d/app.conf
 COPY start.sh /start.sh
+COPY server/api.py /app/api.py
 
 RUN chmod +x /start.sh && \
     chown -R nginx:nginx /app/dist && \

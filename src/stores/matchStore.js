@@ -27,6 +27,28 @@ function persist(matches) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
 }
 
+// Push scoreboard settings to the server-side API so the OBS script can
+// fetch them by game ID. Fire-and-forget — errors are silently ignored.
+function pushGameSettings(match) {
+  if (!match.gameId) return;
+  const payload = {
+    away:       match.awayTeam           || '',
+    home:       match.homeTeam           || '',
+    awayColor:  match.awayPrimaryColor   || '#808080',
+    awayColor2: match.awaySecondaryColor || '#606060',
+    homeColor:  match.homePrimaryColor   || '#808080',
+    homeColor2: match.homeSecondaryColor || '#606060',
+    awayLogo:   match.awayLogoUrl        || '',
+    homeLogo:   match.homeLogoUrl        || '',
+    replay:     match.replay             || false,
+  };
+  fetch(`/api/game-settings/${match.gameId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+}
+
 export function getMatches() {
   return load();
 }
@@ -52,6 +74,7 @@ export function createMatch(data) {
   };
   matches.push(match);
   persist(matches);
+  pushGameSettings(match);
   return match;
 }
 
@@ -62,6 +85,7 @@ export function updateMatch(id, data) {
   const updated = { ...matches[idx], ...data, updatedAt: new Date().toISOString() };
   matches[idx] = updated;
   persist(matches);
+  pushGameSettings(updated);
   return updated;
 }
 
