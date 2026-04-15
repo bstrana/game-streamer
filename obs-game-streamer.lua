@@ -22,6 +22,7 @@
 ]]
 
 obs = obslua
+local bit = require("bit")
 
 -- ── Script description shown in the Scripts panel ────────────────────────────
 function script_description()
@@ -80,12 +81,21 @@ function script_update(settings)
   current_settings = settings
 end
 
+-- Register a Tools menu item on load
+function script_load(settings)
+  current_settings = settings
+  obs.obs_frontend_add_tools_menu_item("Game Streamer: Update Scoreboard", function()
+    add_or_update_source()
+  end)
+end
+
 -- ── Helpers ───────────────────────────────────────────────────────────────────
 -- Convert OBS ABGR int to a 6-char hex string (without #)
+-- Uses LuaJIT bit library (Lua 5.1 — OBS does not support Lua 5.3 bitwise ops)
 local function color_to_hex(abgr)
-  local r = (abgr)       & 0xFF
-  local g = (abgr >> 8)  & 0xFF
-  local b = (abgr >> 16) & 0xFF
+  local r = bit.band(abgr, 0xFF)
+  local g = bit.band(bit.rshift(abgr, 8),  0xFF)
+  local b = bit.band(bit.rshift(abgr, 16), 0xFF)
   return string.format("%02x%02x%02x", r, g, b)
 end
 
