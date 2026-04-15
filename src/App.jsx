@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import keycloak from './keycloak';
 import Dashboard from './pages/Dashboard';
 import MatchEdit from './pages/MatchEdit';
 import Overlay from './pages/Overlay';
@@ -22,7 +23,10 @@ function ProtectedLayout() {
   const { initialized, authenticated } = useAuth();
 
   if (!initialized) return <LoadingScreen />;
-  if (!authenticated) return <Navigate to="/" replace />;
+  if (!authenticated) {
+    keycloak.login({ redirectUri: window.location.href });
+    return <LoadingScreen />;
+  }
 
   return <Outlet />;
 }
