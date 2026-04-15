@@ -696,9 +696,9 @@
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.5",
         "addons": { "localstorage": {} },
         "icon": "file://appicon.png",
-        "iconUrl": "https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png",
+        "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
         "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://raw.githubusercontent.com/bstrana/game-streamer/main/public/appicon.png"],
+        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
         "changelog": "OBS script: local file picker for team logos, default browser source height 240, Tools menu item deferred to after OBS frontend load; overlay scoreboard team logo enlarged to 52px and abbreviation font to 24px.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
