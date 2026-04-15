@@ -41,10 +41,12 @@ function script_properties()
   obs.obs_properties_add_text(props, "home",       "Home abbreviation",    obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_color(props, "away_color",  "Away primary colour")
   obs.obs_properties_add_color(props, "away_color2", "Away secondary colour")
-  obs.obs_properties_add_text(props, "away_logo",  "Away logo URL",        obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_path(props, "away_logo", "Away logo file",
+    obs.OBS_PATH_FILE, "Image files (*.png *.jpg *.jpeg *.gif *.svg *.webp)", nil)
   obs.obs_properties_add_color(props, "home_color",  "Home primary colour")
   obs.obs_properties_add_color(props, "home_color2", "Home secondary colour")
-  obs.obs_properties_add_text(props, "home_logo",  "Home logo URL",        obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_path(props, "home_logo", "Home logo file",
+    obs.OBS_PATH_FILE, "Image files (*.png *.jpg *.jpeg *.gif *.svg *.webp)", nil)
   obs.obs_properties_add_bool(props,  "replay",    "Replay mode")
   obs.obs_properties_add_int(props,   "width",     "Width",  320, 3840, 1)
   obs.obs_properties_add_int(props,   "height",    "Height", 100, 2160, 1)
@@ -72,7 +74,7 @@ function script_defaults(settings)
   obs.obs_data_set_default_string(settings, "home_logo",   "")
   obs.obs_data_set_default_bool(settings,   "replay",      false)
   obs.obs_data_set_default_int(settings,    "width",       800)
-  obs.obs_data_set_default_int(settings,    "height",      160)
+  obs.obs_data_set_default_int(settings,    "height",      240)
 end
 
 -- Keep a reference to current settings
@@ -81,11 +83,21 @@ function script_update(settings)
   current_settings = settings
 end
 
--- Register a Tools menu item on load
+-- Called when the Tools menu item is clicked
+local function on_tools_menu()
+  add_or_update_source()
+end
+
 function script_load(settings)
   current_settings = settings
-  obs.obs_frontend_add_tools_menu_item("Game Streamer: Update Scoreboard", function()
-    add_or_update_source()
+  -- Defer menu registration until OBS has finished building its frontend.
+  -- Calling obs_frontend_add_tools_menu_item too early (before
+  -- OBS_FRONTEND_EVENT_FINISHED_LOADING) results in a no-op.
+  obs.obs_frontend_add_event_callback(function(event)
+    if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING then
+      obs.obs_frontend_add_tools_menu_item(
+        "Game Streamer: Update Scoreboard", on_tools_menu)
+    end
   end)
 end
 
@@ -99,12 +111,20 @@ local function color_to_hex(abgr)
   return string.format("%02x%02x%02x", r, g, b)
 end
 
--- Simple percent-encode for logo URLs passed as query param values
+-- Percent-encode a string for use inside a URL query parameter value
 local function url_encode(str)
-  if str == "" then return "" end
+  if str == nil or str == "" then return "" end
   return str:gsub("([^%w%-%.%_%~])", function(c)
     return string.format("%%%02X", string.byte(c))
   end)
+end
+
+-- Convert a local file path to a file:// URL encoded for use as a query param
+local function path_to_logo_param(path)
+  if path == nil or path == "" then return "" end
+  path = path:gsub("\\", "/")                  -- normalise backslashes
+  local file_url = "file:///" .. path:gsub("^/+", "")
+  return url_encode(file_url)                  -- encode for query string
 end
 
 local function build_url(s)
@@ -114,10 +134,10 @@ local function build_url(s)
   local home      = obs.obs_data_get_string(s, "home")
   local c1        = color_to_hex(obs.obs_data_get_int(s, "away_color"))
   local c2        = color_to_hex(obs.obs_data_get_int(s, "away_color2"))
-  local away_logo = url_encode(obs.obs_data_get_string(s, "away_logo"))
+  local away_logo = path_to_logo_param(obs.obs_data_get_string(s, "away_logo"))
   local c3        = color_to_hex(obs.obs_data_get_int(s, "home_color"))
   local c4        = color_to_hex(obs.obs_data_get_int(s, "home_color2"))
-  local home_logo = url_encode(obs.obs_data_get_string(s, "home_logo"))
+  local home_logo = path_to_logo_param(obs.obs_data_get_string(s, "home_logo"))
   local replay    = obs.obs_data_get_bool(s, "replay") and "1" or "0"
 
   local url = string.format(
