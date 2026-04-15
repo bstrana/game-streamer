@@ -645,6 +645,34 @@
       "ts": "Thu, 16 Apr 2026 10:00:00 GMT",
       "publishState": "published"
     },
+    "1.2.6": {
+      "manifest": {
+        "id": "io.github.bstrana.game-streamer",
+        "title": "Game Streamer",
+        "author": "bstrana",
+        "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
+        "tagline": "Baseball scoreboard overlay for OBS streaming",
+        "version": "1.2.6",
+        "manifestVersion": 2,
+        "minBoxVersion": "9.1.0",
+        "website": "https://github.com/bstrana/game-streamer",
+        "contactEmail": "support@example.com",
+        "healthCheckPath": "/health",
+        "httpPort": 8000,
+        "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.6",
+        "addons": { "localstorage": {} },
+        "icon": "file://appicon.png",
+        "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
+        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
+        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "changelog": "Server-side game settings API: app auto-pushes match settings on save; OBS script fetches team names, colours, and logos by game ID with one click. Fix OBS colour channel swap (R/B were inverted in overlay).",
+        "packagerName": "bstrana",
+        "packagerUrl": "https://github.com/bstrana"
+      },
+      "creationDate": "Thu, 16 Apr 2026 16:00:00 GMT",
+      "ts": "Thu, 16 Apr 2026 16:00:00 GMT",
+      "publishState": "published"
+    },
     "1.2.5": {
       "manifest": {
         "id": "io.github.bstrana.game-streamer",
