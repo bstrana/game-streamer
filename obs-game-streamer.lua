@@ -17,6 +17,7 @@
       ?away={Away abbr}&home={Home abbr}
       &awayColor={hex}&awayColor2={hex}
       &homeColor={hex}&homeColor2={hex}
+      &awayLogo={url}&homeLogo={url}
       &replay={0|1}
 ]]
 
@@ -33,14 +34,16 @@ end
 function script_properties()
   local props = obs.obs_properties_create()
 
-  obs.obs_properties_add_text(props, "app_url",    "App URL",         obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_text(props, "game_id",    "Game ID",         obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_text(props, "away",       "Away abbreviation",obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_text(props, "home",       "Home abbreviation",obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "app_url",    "App URL",              obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "game_id",    "Game ID",              obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "away",       "Away abbreviation",    obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "home",       "Home abbreviation",    obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_color(props, "away_color",  "Away primary colour")
   obs.obs_properties_add_color(props, "away_color2", "Away secondary colour")
+  obs.obs_properties_add_text(props, "away_logo",  "Away logo URL",        obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_color(props, "home_color",  "Home primary colour")
   obs.obs_properties_add_color(props, "home_color2", "Home secondary colour")
+  obs.obs_properties_add_text(props, "home_logo",  "Home logo URL",        obs.OBS_TEXT_DEFAULT)
   obs.obs_properties_add_bool(props,  "replay",    "Replay mode")
   obs.obs_properties_add_int(props,   "width",     "Width",  320, 3840, 1)
   obs.obs_properties_add_int(props,   "height",    "Height", 100, 2160, 1)
@@ -62,8 +65,10 @@ function script_defaults(settings)
   obs.obs_data_set_default_string(settings, "home",        "Home")
   obs.obs_data_set_default_int(settings,    "away_color",  0xFFC0392B)  -- #c0392b
   obs.obs_data_set_default_int(settings,    "away_color2", 0xFF7B241C)  -- #7b241c
+  obs.obs_data_set_default_string(settings, "away_logo",   "")
   obs.obs_data_set_default_int(settings,    "home_color",  0xFF2471A3)  -- #2471a3
   obs.obs_data_set_default_int(settings,    "home_color2", 0xFF1A5276)  -- #1a5276
+  obs.obs_data_set_default_string(settings, "home_logo",   "")
   obs.obs_data_set_default_bool(settings,   "replay",      false)
   obs.obs_data_set_default_int(settings,    "width",       800)
   obs.obs_data_set_default_int(settings,    "height",      160)
@@ -84,21 +89,36 @@ local function color_to_hex(abgr)
   return string.format("%02x%02x%02x", r, g, b)
 end
 
-local function build_url(s)
-  local base    = obs.obs_data_get_string(s, "app_url"):gsub("/+$", "")
-  local game_id = obs.obs_data_get_string(s, "game_id")
-  local away    = obs.obs_data_get_string(s, "away")
-  local home    = obs.obs_data_get_string(s, "home")
-  local c1      = color_to_hex(obs.obs_data_get_int(s, "away_color"))
-  local c2      = color_to_hex(obs.obs_data_get_int(s, "away_color2"))
-  local c3      = color_to_hex(obs.obs_data_get_int(s, "home_color"))
-  local c4      = color_to_hex(obs.obs_data_get_int(s, "home_color2"))
-  local replay  = obs.obs_data_get_bool(s, "replay") and "1" or "0"
+-- Simple percent-encode for logo URLs passed as query param values
+local function url_encode(str)
+  if str == "" then return "" end
+  return str:gsub("([^%w%-%.%_%~])", function(c)
+    return string.format("%%%02X", string.byte(c))
+  end)
+end
 
-  return string.format(
+local function build_url(s)
+  local base      = obs.obs_data_get_string(s, "app_url"):gsub("/+$", "")
+  local game_id   = obs.obs_data_get_string(s, "game_id")
+  local away      = obs.obs_data_get_string(s, "away")
+  local home      = obs.obs_data_get_string(s, "home")
+  local c1        = color_to_hex(obs.obs_data_get_int(s, "away_color"))
+  local c2        = color_to_hex(obs.obs_data_get_int(s, "away_color2"))
+  local away_logo = url_encode(obs.obs_data_get_string(s, "away_logo"))
+  local c3        = color_to_hex(obs.obs_data_get_int(s, "home_color"))
+  local c4        = color_to_hex(obs.obs_data_get_int(s, "home_color2"))
+  local home_logo = url_encode(obs.obs_data_get_string(s, "home_logo"))
+  local replay    = obs.obs_data_get_bool(s, "replay") and "1" or "0"
+
+  local url = string.format(
     "%s/overlay/game/%s?away=%s&home=%s&awayColor=%s&awayColor2=%s&homeColor=%s&homeColor2=%s&replay=%s",
     base, game_id, away, home, c1, c2, c3, c4, replay
   )
+
+  if away_logo ~= "" then url = url .. "&awayLogo=" .. away_logo end
+  if home_logo ~= "" then url = url .. "&homeLogo=" .. home_logo end
+
+  return url
 end
 
 local SOURCE_NAME = "Game Streamer Scoreboard"
