@@ -6,7 +6,9 @@
 
   Setup:
     1. In OBS → Tools → Scripts → "+" → select this file.
-    2. Fill in the App URL and click "Add / Update Source".
+    2. Enter the App URL and Game ID.
+    3. Click "Fetch Settings from App" to auto-fill team details.
+    4. Click "Add / Update Source".
 
   The script creates a browser source named "Game Streamer Scoreboard"
   in the current scene. Re-running with a different game ID updates
@@ -24,92 +26,8 @@
 obs = obslua
 local bit = require("bit")
 
--- ── Script description shown in the Scripts panel ────────────────────────────
-function script_description()
-  return [[<h3>Game Streamer Scoreboard</h3>
-<p>Creates or updates a Browser Source for a WBSC baseball scoreboard overlay.</p>
-<ol>
-  <li>Enter the <b>App URL</b> and <b>Game ID</b>.</li>
-  <li>Click <b>Fetch Settings from App</b> to auto-fill team names, colours, and logos
-      (the game must have been saved in the Game Streamer app first).</li>
-  <li>Click <b>Add / Update Source</b> to apply.</li>
-</ol>]]
-end
-
--- ── Settings definition ───────────────────────────────────────────────────────
-function script_properties()
-  local props = obs.obs_properties_create()
-
-  obs.obs_properties_add_text(props, "app_url",    "App URL",              obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_text(props, "game_id",    "Game ID",              obs.OBS_TEXT_DEFAULT)
-
-  obs.obs_properties_add_button(props, "btn_fetch", "↓  Fetch Settings from App",
-    function(_, _)
-      fetch_game_settings()
-      return true  -- tell OBS to re-read settings and refresh the UI
-    end)
-
-  obs.obs_properties_add_text(props, "away",       "Away abbreviation",    obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_text(props, "home",       "Home abbreviation",    obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_color(props, "away_color",  "Away primary colour")
-  obs.obs_properties_add_color(props, "away_color2", "Away secondary colour")
-  obs.obs_properties_add_text(props, "away_logo",  "Away logo URL",  obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_color(props, "home_color",  "Home primary colour")
-  obs.obs_properties_add_color(props, "home_color2", "Home secondary colour")
-  obs.obs_properties_add_text(props, "home_logo",  "Home logo URL",  obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_bool(props,  "replay",    "Replay mode")
-  obs.obs_properties_add_int(props,   "width",     "Width",  320, 3840, 1)
-  obs.obs_properties_add_int(props,   "height",    "Height", 100, 2160, 1)
-
-  obs.obs_properties_add_button(props, "btn_add", "Add / Update Source",
-    function(p, prop)
-      add_or_update_source()
-      return true
-    end)
-
-  return props
-end
-
--- ── Default values ────────────────────────────────────────────────────────────
-function script_defaults(settings)
-  obs.obs_data_set_default_string(settings, "app_url",     "https://gamestreamer.example.com")
-  obs.obs_data_set_default_string(settings, "game_id",     "")
-  obs.obs_data_set_default_string(settings, "away",        "Away")
-  obs.obs_data_set_default_string(settings, "home",        "Home")
-  obs.obs_data_set_default_int(settings,    "away_color",  0xFFC0392B)  -- #c0392b
-  obs.obs_data_set_default_int(settings,    "away_color2", 0xFF7B241C)  -- #7b241c
-  obs.obs_data_set_default_string(settings, "away_logo",   "")
-  obs.obs_data_set_default_int(settings,    "home_color",  0xFF2471A3)  -- #2471a3
-  obs.obs_data_set_default_int(settings,    "home_color2", 0xFF1A5276)  -- #1a5276
-  obs.obs_data_set_default_string(settings, "home_logo",   "")
-  obs.obs_data_set_default_bool(settings,   "replay",      false)
-  obs.obs_data_set_default_int(settings,    "width",       800)
-  obs.obs_data_set_default_int(settings,    "height",      240)
-end
-
--- Keep a reference to current settings
+-- Current settings reference — updated by script_update / script_load
 local current_settings = nil
-function script_update(settings)
-  current_settings = settings
-end
-
--- Called when the Tools menu item is clicked
-local function on_tools_menu()
-  add_or_update_source()
-end
-
-function script_load(settings)
-  current_settings = settings
-  -- Defer menu registration until OBS has finished building its frontend.
-  -- Calling obs_frontend_add_tools_menu_item too early (before
-  -- OBS_FRONTEND_EVENT_FINISHED_LOADING) results in a no-op.
-  obs.obs_frontend_add_event_callback(function(event)
-    if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING then
-      obs.obs_frontend_add_tools_menu_item(
-        "Game Streamer: Update Scoreboard", on_tools_menu)
-    end
-  end)
-end
 
 -- ── Helpers ───────────────────────────────────────────────────────────────────
 -- OBS stores colours as ARGB: bits 24-31 = alpha, 16-23 = red, 8-15 = green, 0-7 = blue.
@@ -125,7 +43,7 @@ end
 
 -- Convert a CSS #rrggbb hex string → OBS ARGB int (alpha = 0xFF)
 local function hex_to_obs(hex)
-  hex = (hex or ''):gsub('^#', ''):lower()
+  hex = (hex or ""):gsub("^#", ""):lower()
   if #hex < 6 then return 0xFF808080 end
   local r = tonumber(hex:sub(1, 2), 16) or 128
   local g = tonumber(hex:sub(3, 4), 16) or 128
@@ -135,57 +53,15 @@ end
 
 -- Extract a string value from a flat JSON object
 local function json_str(s, key)
-  return (s:match('"' .. key .. '"%s*:%s*"(.-)"') or ''):gsub('\\/', '/')
+  return (s:match('"' .. key .. '"%s*:%s*"(.-)"') or ""):gsub("\\/", "/")
 end
 
 -- Extract a boolean value from a flat JSON object
 local function json_bool(s, key)
-  return s:match('"' .. key .. '"%s*:%s*(true)') == 'true'
+  return s:match('"' .. key .. '"%s*:%s*(true)') == "true"
 end
 
--- ── Fetch game settings from the Game Streamer app ────────────────────────────
-local function fetch_game_settings()
-  if not current_settings then return end
-  local base    = obs.obs_data_get_string(current_settings, 'app_url'):gsub('/+$', '')
-  local game_id = obs.obs_data_get_string(current_settings, 'game_id')
-  if game_id == '' then
-    obs.script_log(obs.LOG_WARNING, 'Game Streamer: enter a Game ID before fetching.')
-    return
-  end
-
-  local url    = base .. '/api/game-settings/' .. game_id
-  local handle = io.popen(string.format('curl -s --max-time 8 "%s"', url))
-  if not handle then
-    obs.script_log(obs.LOG_WARNING,
-      'Game Streamer: curl not available — install curl to use Fetch Settings.')
-    return
-  end
-  local resp = handle:read('*a')
-  handle:close()
-
-  if not resp or resp == '' or resp:find('"error"') then
-    obs.script_log(obs.LOG_WARNING,
-      'Game Streamer: no settings for game ' .. game_id
-      .. ' — save the match in the app first.')
-    return
-  end
-
-  local away = json_str(resp, 'away')
-  local home = json_str(resp, 'home')
-  if away ~= '' then obs.obs_data_set_string(current_settings, 'away', away) end
-  if home ~= '' then obs.obs_data_set_string(current_settings, 'home', home) end
-  obs.obs_data_set_int(current_settings,    'away_color',  hex_to_obs(json_str(resp, 'awayColor')))
-  obs.obs_data_set_int(current_settings,    'away_color2', hex_to_obs(json_str(resp, 'awayColor2')))
-  obs.obs_data_set_string(current_settings, 'away_logo',   json_str(resp, 'awayLogo'))
-  obs.obs_data_set_int(current_settings,    'home_color',  hex_to_obs(json_str(resp, 'homeColor')))
-  obs.obs_data_set_int(current_settings,    'home_color2', hex_to_obs(json_str(resp, 'homeColor2')))
-  obs.obs_data_set_string(current_settings, 'home_logo',   json_str(resp, 'homeLogo'))
-  obs.obs_data_set_bool(current_settings,   'replay',      json_bool(resp, 'replay'))
-  obs.script_log(obs.LOG_INFO,
-    'Game Streamer: loaded settings for game ' .. game_id)
-end
-
--- Percent-encode a string for use inside a URL query parameter value
+-- Percent-encode a string for use as a URL query parameter value
 local function url_encode(str)
   if str == nil or str == "" then return "" end
   return str:gsub("([^%w%-%.%_%~])", function(c)
@@ -193,6 +69,48 @@ local function url_encode(str)
   end)
 end
 
+-- ── Fetch game settings from the Game Streamer app ────────────────────────────
+local function fetch_game_settings()
+  if not current_settings then return end
+  local base    = obs.obs_data_get_string(current_settings, "app_url"):gsub("/+$", "")
+  local game_id = obs.obs_data_get_string(current_settings, "game_id")
+  if game_id == "" then
+    obs.script_log(obs.LOG_WARNING, "Game Streamer: enter a Game ID before fetching.")
+    return
+  end
+
+  local url    = base .. "/api/game-settings/" .. game_id
+  local handle = io.popen(string.format('curl -s --max-time 8 "%s"', url))
+  if not handle then
+    obs.script_log(obs.LOG_WARNING,
+      "Game Streamer: curl not available — install curl to use Fetch Settings.")
+    return
+  end
+  local resp = handle:read("*a")
+  handle:close()
+
+  if not resp or resp == "" or resp:find('"error"') then
+    obs.script_log(obs.LOG_WARNING,
+      "Game Streamer: no settings for game " .. game_id
+      .. " — save the match in the app first.")
+    return
+  end
+
+  local away = json_str(resp, "away")
+  local home = json_str(resp, "home")
+  if away ~= "" then obs.obs_data_set_string(current_settings, "away", away) end
+  if home ~= "" then obs.obs_data_set_string(current_settings, "home", home) end
+  obs.obs_data_set_int(current_settings,    "away_color",  hex_to_obs(json_str(resp, "awayColor")))
+  obs.obs_data_set_int(current_settings,    "away_color2", hex_to_obs(json_str(resp, "awayColor2")))
+  obs.obs_data_set_string(current_settings, "away_logo",   json_str(resp, "awayLogo"))
+  obs.obs_data_set_int(current_settings,    "home_color",  hex_to_obs(json_str(resp, "homeColor")))
+  obs.obs_data_set_int(current_settings,    "home_color2", hex_to_obs(json_str(resp, "homeColor2")))
+  obs.obs_data_set_string(current_settings, "home_logo",   json_str(resp, "homeLogo"))
+  obs.obs_data_set_bool(current_settings,   "replay",      json_bool(resp, "replay"))
+  obs.script_log(obs.LOG_INFO, "Game Streamer: loaded settings for game " .. game_id)
+end
+
+-- ── Build overlay URL ─────────────────────────────────────────────────────────
 local function build_url(s)
   local base      = obs.obs_data_get_string(s, "app_url"):gsub("/+$", "")
   local game_id   = url_encode(obs.obs_data_get_string(s, "game_id"))
@@ -217,42 +135,37 @@ local function build_url(s)
   return url
 end
 
+-- ── Create / update the OBS browser source ───────────────────────────────────
 local SOURCE_NAME = "Game Streamer Scoreboard"
 
-function add_or_update_source()
+local function add_or_update_source()
   if not current_settings then return end
 
   local game_id = obs.obs_data_get_string(current_settings, "game_id")
   if game_id == "" then
-    obs.script_log(obs.LOG_WARNING, "Game ID is empty — enter a game ID first.")
+    obs.script_log(obs.LOG_WARNING, "Game Streamer: Game ID is empty.")
     return
   end
 
   local url    = build_url(current_settings)
   local width  = obs.obs_data_get_int(current_settings, "width")
   local height = obs.obs_data_get_int(current_settings, "height")
-
-  -- Log a readable summary (skip logo data blobs which can be hundreds of KB)
-  local base = obs.obs_data_get_string(current_settings, "app_url"):gsub("/+$", "")
-  local gid  = obs.obs_data_get_string(current_settings, "game_id")
+  local base   = obs.obs_data_get_string(current_settings, "app_url"):gsub("/+$", "")
   obs.script_log(obs.LOG_INFO, string.format(
-    "Game Streamer: %s/overlay/game/%s  [%dx%d]", base, gid, width, height))
+    "Game Streamer: %s/overlay/game/%s  [%dx%d]", base, game_id, width, height))
 
-  -- Build browser-source settings
   local browser_settings = obs.obs_data_create()
   obs.obs_data_set_string(browser_settings, "url",    url)
   obs.obs_data_set_int(browser_settings,    "width",  width)
   obs.obs_data_set_int(browser_settings,    "height", height)
   obs.obs_data_set_bool(browser_settings,   "shutdown_on_scene_switch", false)
 
-  -- Try to find an existing source with this name
   local existing = obs.obs_get_source_by_name(SOURCE_NAME)
   if existing then
     obs.obs_source_update(existing, browser_settings)
     obs.obs_source_release(existing)
     obs.script_log(obs.LOG_INFO, "Game Streamer: updated existing source.")
   else
-    -- Create new source and add to current scene
     local source = obs.obs_source_create("browser_source", SOURCE_NAME, browser_settings, nil)
     local scene_src = obs.obs_frontend_get_current_scene()
     if scene_src then
@@ -265,4 +178,80 @@ function add_or_update_source()
   end
 
   obs.obs_data_release(browser_settings)
+end
+
+-- ── OBS script callbacks ──────────────────────────────────────────────────────
+function script_description()
+  return [[<h3>Game Streamer Scoreboard</h3>
+<p>Creates or updates a Browser Source for a WBSC baseball scoreboard overlay.</p>
+<ol>
+  <li>Enter the <b>App URL</b> and <b>Game ID</b>.</li>
+  <li>Click <b>Fetch Settings from App</b> to auto-fill team names, colours, and logos
+      (the game must have been saved in the Game Streamer app first).</li>
+  <li>Click <b>Add / Update Source</b> to apply.</li>
+</ol>]]
+end
+
+function script_properties()
+  local props = obs.obs_properties_create()
+
+  obs.obs_properties_add_text(props, "app_url",  "App URL",  obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "game_id",  "Game ID",  obs.OBS_TEXT_DEFAULT)
+
+  obs.obs_properties_add_button(props, "btn_fetch", "↓  Fetch Settings from App",
+    function(_, _)
+      fetch_game_settings()
+      return true  -- signals OBS to re-read settings and refresh the UI
+    end)
+
+  obs.obs_properties_add_text(props,  "away",       "Away abbreviation",    obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props,  "home",       "Home abbreviation",    obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_color(props, "away_color",  "Away primary colour")
+  obs.obs_properties_add_color(props, "away_color2", "Away secondary colour")
+  obs.obs_properties_add_text(props,  "away_logo",  "Away logo URL",        obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_color(props, "home_color",  "Home primary colour")
+  obs.obs_properties_add_color(props, "home_color2", "Home secondary colour")
+  obs.obs_properties_add_text(props,  "home_logo",  "Home logo URL",        obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_bool(props,  "replay",     "Replay mode")
+  obs.obs_properties_add_int(props,   "width",      "Width",  320, 3840, 1)
+  obs.obs_properties_add_int(props,   "height",     "Height", 100, 2160, 1)
+
+  obs.obs_properties_add_button(props, "btn_add", "Add / Update Source",
+    function(_, _)
+      add_or_update_source()
+      return true
+    end)
+
+  return props
+end
+
+function script_defaults(settings)
+  obs.obs_data_set_default_string(settings, "app_url",     "https://gamestreamer.example.com")
+  obs.obs_data_set_default_string(settings, "game_id",     "")
+  obs.obs_data_set_default_string(settings, "away",        "Away")
+  obs.obs_data_set_default_string(settings, "home",        "Home")
+  obs.obs_data_set_default_int(settings,    "away_color",  0xFFC0392B)  -- #c0392b
+  obs.obs_data_set_default_int(settings,    "away_color2", 0xFF7B241C)  -- #7b241c
+  obs.obs_data_set_default_string(settings, "away_logo",   "")
+  obs.obs_data_set_default_int(settings,    "home_color",  0xFF2471A3)  -- #2471a3
+  obs.obs_data_set_default_int(settings,    "home_color2", 0xFF1A5276)  -- #1a5276
+  obs.obs_data_set_default_string(settings, "home_logo",   "")
+  obs.obs_data_set_default_bool(settings,   "replay",      false)
+  obs.obs_data_set_default_int(settings,    "width",       800)
+  obs.obs_data_set_default_int(settings,    "height",      240)
+end
+
+function script_update(settings)
+  current_settings = settings
+end
+
+function script_load(settings)
+  current_settings = settings
+  -- Defer menu registration until OBS has finished building its frontend.
+  obs.obs_frontend_add_event_callback(function(event)
+    if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING then
+      obs.obs_frontend_add_tools_menu_item(
+        "Game Streamer: Update Scoreboard", add_or_update_source)
+    end
+  end)
 end
