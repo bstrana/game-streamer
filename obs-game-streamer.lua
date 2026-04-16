@@ -53,7 +53,8 @@ end
 
 -- Extract a string value from a flat JSON object
 local function json_str(s, key)
-  return (s:match('"' .. key .. '"%s*:%s*"(.-)"') or ""):gsub("\\/", "/")
+  local val = (s:match('"' .. key .. '"%s*:%s*"(.-)"') or ""):gsub("\\/", "/")
+  return val  -- explicit single-value return (gsub returns 2 values; we discard the count)
 end
 
 -- Extract a boolean value from a flat JSON object
