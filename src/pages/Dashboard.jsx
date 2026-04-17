@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getMatches, deleteMatch } from '../stores/matchStore';
+import { getMatches, deleteMatch, duplicateMatch } from '../stores/matchStore';
 
 const runtimeCfg = window.__APP_CONFIG__ || {};
 const BASE_URL = runtimeCfg.appBaseUrl || import.meta.env.VITE_APP_BASE_URL || window.location.origin;
@@ -33,7 +33,7 @@ function CopyButton({ text }) {
   );
 }
 
-function MatchRow({ match, onDelete }) {
+function MatchRow({ match, onDelete, onDuplicate }) {
   const overlayUrl = `${BASE_URL}/overlay/${match.id}`;
 
   const handleDelete = () => {
@@ -54,6 +54,9 @@ function MatchRow({ match, onDelete }) {
           <Link to={`/match/${match.id}/edit`} className="btn btn-sm btn-outline">
             Edit
           </Link>
+          <button className="btn btn-sm btn-outline" onClick={() => onDuplicate(match.id)}>
+            Duplicate
+          </button>
           <button className="btn btn-sm btn-danger" onClick={handleDelete}>
             Delete
           </button>
@@ -121,6 +124,11 @@ export default function Dashboard() {
     reload();
   };
 
+  const handleDuplicate = (id) => {
+    duplicateMatch(id);
+    reload();
+  };
+
   return (
     <Layout>
       <div className="page-header">
@@ -142,7 +150,7 @@ export default function Dashboard() {
       ) : (
         <div className="match-list">
           {matches.map((m) => (
-            <MatchRow key={m.id} match={m} onDelete={handleDelete} />
+            <MatchRow key={m.id} match={m} onDelete={handleDelete} onDuplicate={handleDuplicate} />
           ))}
         </div>
       )}
