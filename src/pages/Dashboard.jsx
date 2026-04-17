@@ -37,7 +37,7 @@ function MatchRow({ match, onDelete, onDuplicate }) {
   const overlayUrl = `${BASE_URL}/overlay/${match.id}`;
 
   const handleDelete = () => {
-    if (window.confirm(`Delete match "${match.awayTeam} vs ${match.homeTeam}"?`)) {
+    if (window.confirm(`Delete "${match.awayTeam} vs ${match.homeTeam}"?`)) {
       onDelete(match.id);
     }
   };
@@ -46,65 +46,28 @@ function MatchRow({ match, onDelete, onDuplicate }) {
     <div className="match-card">
       <div className="match-card-header">
         <div className="match-teams">
-          <span className="team away">{match.awayTeam || 'Away Team'}</span>
+          <span className="team">{match.awayTeam || 'Away'}</span>
           <span className="vs">vs</span>
-          <span className="team home">{match.homeTeam || 'Home Team'}</span>
+          <span className="team">{match.homeTeam || 'Home'}</span>
+        </div>
+        <div className="match-chips">
+          {match.time && <span className="chip">{formatDateTime(match.time)}</span>}
+          {match.location && <span className="chip">{match.location}</span>}
+          {match.gameId
+            ? <span className="chip chip-id">#{match.gameId}</span>
+            : <span className="chip chip-missing">No Game ID</span>}
         </div>
         <div className="match-actions">
-          <Link to={`/match/${match.id}/edit`} className="btn btn-sm btn-outline">
-            Edit
-          </Link>
-          <button className="btn btn-sm btn-outline" onClick={() => onDuplicate(match.id)}>
-            Duplicate
-          </button>
-          <button className="btn btn-sm btn-danger" onClick={handleDelete}>
-            Delete
-          </button>
+          <Link to={`/match/${match.id}/edit`} className="btn btn-sm btn-outline">Edit</Link>
+          <button className="btn btn-sm btn-outline" onClick={() => onDuplicate(match.id)}>Duplicate</button>
+          <button className="btn btn-sm btn-danger" onClick={handleDelete}>Delete</button>
         </div>
       </div>
-
-      <div className="match-meta">
-        <span className="meta-item">
-          <span className="meta-label">Competition</span>
-          <span className="meta-value">{match.competition || '—'}</span>
-        </span>
-        <span className="meta-item">
-          <span className="meta-label">Location</span>
-          <span className="meta-value">{match.location || '—'}</span>
-        </span>
-        <span className="meta-item">
-          <span className="meta-label">Time</span>
-          <span className="meta-value">{formatDateTime(match.time)}</span>
-        </span>
-        <span className="meta-item">
-          <span className="meta-label">Game ID</span>
-          <span className={`meta-value ${match.gameId ? 'game-id-set' : 'game-id-missing'}`}>
-            {match.gameId || 'Not set'}
-          </span>
-        </span>
-      </div>
-
-      <div className="match-overlay-section">
-        <div className="overlay-url-row">
-          <span className="overlay-label">OBS Browser Source URL:</span>
-          <div className="overlay-url-group">
-            <code className="overlay-url">{overlayUrl}</code>
-            <CopyButton text={overlayUrl} />
-            <a
-              href={overlayUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-ghost btn-sm"
-            >
-              Preview
-            </a>
-          </div>
-        </div>
-        {!match.gameId && (
-          <p className="overlay-note">
-            ⚠ No Game ID set — overlay will show scheduled match info only.
-          </p>
-        )}
+      <div className="match-overlay-row">
+        <span className="overlay-label">OBS URL</span>
+        <code className="overlay-url">{overlayUrl}</code>
+        <CopyButton text={overlayUrl} />
+        <a href={overlayUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Preview</a>
       </div>
     </div>
   );
