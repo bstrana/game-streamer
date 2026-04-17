@@ -781,6 +781,10 @@
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
+      "creationDate": "Fri, 17 Apr 2026 10:00:00 GMT",
+      "ts": "Fri, 17 Apr 2026 10:00:00 GMT",
+      "publishState": "published"
+    },
     "1.2.9": {
       "manifest": {
         "id": "io.github.bstrana.game-streamer",
