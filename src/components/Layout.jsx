@@ -20,6 +20,12 @@ export default function Layout({ children }) {
             Matches
           </Link>
           <Link
+            to="/import"
+            className={`nav-link ${location.pathname === '/import' ? 'active' : ''}`}
+          >
+            Import
+          </Link>
+          <Link
             to="/settings/youtube"
             className={`nav-link ${location.pathname === '/settings/youtube' ? 'active' : ''}`}
           >
