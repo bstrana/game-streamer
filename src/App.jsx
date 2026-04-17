@@ -7,6 +7,7 @@ import Overlay from './pages/Overlay';
 import OverlayDirect from './pages/OverlayDirect';
 import YouTubeSettings from './pages/YouTubeSettings';
 import YouTubeCallback from './pages/YouTubeCallback';
+import ImportSchedule from './pages/ImportSchedule';
 
 function LoadingScreen() {
   return (
@@ -50,6 +51,7 @@ function AppRoutes() {
           <Route path="/match/new" element={<MatchEdit />} />
           <Route path="/match/:id/edit" element={<MatchEdit />} />
           <Route path="/settings/youtube" element={<YouTubeSettings />} />
+          <Route path="/import" element={<ImportSchedule />} />
         </Route>
 
         {/* Catch-all */}
