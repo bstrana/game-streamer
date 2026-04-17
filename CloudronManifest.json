@@ -11,6 +11,7 @@
   "contactEmail": "support@example.com",
   "healthCheckPath": "/health",
   "httpPort": 8000,
+  "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.9",
   "addons": { "localstorage": {} },
   "icon": "file://appicon.png",
   "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
