@@ -33,6 +33,7 @@ export default function ImportSchedule() {
   const [filterType, setFilterType] = useState('location');
   const [filterValue, setFilterValue] = useState('');
   const [selected, setSelected]     = useState(new Set());
+  const [importing, setImporting]   = useState(false);
 
   const handleParse = () => {
     try {
@@ -95,7 +96,8 @@ export default function ImportSchedule() {
     setSelected(next);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
+    setImporting(true);
     for (const gameId of selected) {
       const game = filteredGames.find(g => g.id === gameId);
       if (!game) continue;
@@ -103,7 +105,7 @@ export default function ImportSchedule() {
       const home   = teamMap[game.homeTeamId];
       const league = game.leagueIds?.[0] ? leagueMap[game.leagueIds[0]] : null;
 
-      createMatch({
+      await createMatch({
         awayTeam:           teamLabel(away),
         homeTeam:           teamLabel(home),
         awayLogoUrl:        away?.logoUrl        || '',
@@ -253,9 +255,11 @@ export default function ImportSchedule() {
             <button
               className="btn btn-primary"
               onClick={handleImport}
-              disabled={selected.size === 0}
+              disabled={selected.size === 0 || importing}
             >
-              Import {selected.size > 0 ? `${selected.size} Match${selected.size !== 1 ? 'es' : ''}` : ''}
+              {importing
+                ? 'Importing…'
+                : `Import ${selected.size > 0 ? `${selected.size} Match${selected.size !== 1 ? 'es' : ''}` : ''}`}
             </button>
           </div>
         </div>

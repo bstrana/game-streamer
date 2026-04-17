@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getMatches, deleteMatch, duplicateMatch, setMatchYouTubeUrl } from '../stores/matchStore';
+import { getMatches, deleteMatch, duplicateMatch, setMatchYouTubeUrl, migrateFromLocalStorage } from '../stores/matchStore';
 
 const runtimeCfg = window.__APP_CONFIG__ || {};
 const BASE_URL = runtimeCfg.appBaseUrl || import.meta.env.VITE_APP_BASE_URL || window.location.origin;
@@ -245,8 +245,8 @@ export default function Dashboard() {
   const [ytConnected, setYtConnected]   = useState(false);
   const [schedulingMatch, setScheduling] = useState(null);
 
-  const reload = () => {
-    const all = getMatches();
+  const reload = async () => {
+    const all = await getMatches();
     all.sort((a, b) => {
       if (!a.time && !b.time) return 0;
       if (!a.time) return 1;
@@ -257,6 +257,7 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    migrateFromLocalStorage().then(n => { if (n > 0) reload(); });
     reload();
     fetch('/api/youtube/status')
       .then(r => r.json())
@@ -264,13 +265,13 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
-  const handleDelete = (id) => {
-    deleteMatch(id);
+  const handleDelete = async (id) => {
+    await deleteMatch(id);
     reload();
   };
 
-  const handleDuplicate = (id) => {
-    duplicateMatch(id);
+  const handleDuplicate = async (id) => {
+    await duplicateMatch(id);
     reload();
   };
 
@@ -282,8 +283,8 @@ export default function Dashboard() {
     setScheduling(match);
   };
 
-  const handleScheduled = (id, url) => {
-    setMatchYouTubeUrl(id, url);
+  const handleScheduled = async (id, url) => {
+    await setMatchYouTubeUrl(id, url);
     reload();
   };
 

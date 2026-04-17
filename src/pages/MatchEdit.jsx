@@ -46,25 +46,23 @@ export default function MatchEdit() {
 
   useEffect(() => {
     if (!isNew) {
-      const match = getMatch(id);
-      if (!match) {
-        navigate('/');
-        return;
-      }
-      setForm({
-        awayTeam: match.awayTeam,
-        homeTeam: match.homeTeam,
-        time: toDatetimeLocal(match.time),
-        location: match.location,
-        competition: match.competition,
-        gameId: match.gameId,
-        awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
-        awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
-        awayLogoUrl: match.awayLogoUrl || '',
-        homePrimaryColor: match.homePrimaryColor || '#2471a3',
-        homeSecondaryColor: match.homeSecondaryColor || '#1a5276',
-        homeLogoUrl: match.homeLogoUrl || '',
-        replay: match.replay || false,
+      getMatch(id).then(match => {
+        if (!match) { navigate('/'); return; }
+        setForm({
+          awayTeam: match.awayTeam,
+          homeTeam: match.homeTeam,
+          time: toDatetimeLocal(match.time),
+          location: match.location,
+          competition: match.competition,
+          gameId: match.gameId,
+          awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
+          awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
+          awayLogoUrl: match.awayLogoUrl || '',
+          homePrimaryColor: match.homePrimaryColor || '#2471a3',
+          homeSecondaryColor: match.homeSecondaryColor || '#1a5276',
+          homeLogoUrl: match.homeLogoUrl || '',
+          replay: match.replay || false,
+        });
       });
     }
   }, [id, isNew, navigate]);
@@ -86,7 +84,7 @@ export default function MatchEdit() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) {
@@ -102,7 +100,6 @@ export default function MatchEdit() {
       gameId: form.gameId.trim(),
       location: form.location.trim(),
       competition: form.competition.trim(),
-      // Convert datetime-local to ISO string, guard against invalid dates
       time: (() => {
         if (!form.time) return '';
         const d = new Date(form.time);
@@ -111,9 +108,9 @@ export default function MatchEdit() {
     };
 
     if (isNew) {
-      createMatch(data);
+      await createMatch(data);
     } else {
-      updateMatch(id, data);
+      await updateMatch(id, data);
     }
     navigate('/');
   };
