@@ -12,32 +12,6 @@
   "healthCheckPath": "/health",
   "httpPort": 8000,
   "addons": { "localstorage": {} },
-  "env": {
-    "KEYCLOAK_URL": {
-      "description": "Keycloak server URL (e.g. https://auth.example.com)",
-      "value": "http://localhost:8080"
-    },
-    "KEYCLOAK_REALM": {
-      "description": "Keycloak realm name",
-      "value": "game-streamer"
-    },
-    "KEYCLOAK_CLIENT_ID": {
-      "description": "Keycloak client ID",
-      "value": "game-streamer-app"
-    },
-    "APP_BASE_URL": {
-      "description": "Public URL of this app (used for overlay link generation)",
-      "value": "https://gamestreamer.example.com"
-    },
-    "GOOGLE_CLIENT_ID": {
-      "description": "Google OAuth 2.0 client ID for YouTube scheduling (optional)",
-      "value": ""
-    },
-    "GOOGLE_CLIENT_SECRET": {
-      "description": "Google OAuth 2.0 client secret for YouTube scheduling (optional)",
-      "value": ""
-    }
-  },
   "icon": "file://appicon.png",
   "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
   "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
