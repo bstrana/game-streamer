@@ -100,6 +100,18 @@ def _yt(path, method='GET', body=None, token=None):
         return json.loads(resp.read())
 
 
+def _upload_thumbnail(broadcast_id, thumbnail_url, token):
+    with urllib.request.urlopen(thumbnail_url, timeout=15) as resp:
+        image_data    = resp.read()
+        content_type  = resp.headers.get('Content-Type', 'image/jpeg').split(';')[0].strip()
+    url = f'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={broadcast_id}&uploadType=media'
+    req = urllib.request.Request(url, data=image_data, method='POST')
+    req.add_header('Authorization', f'Bearer {token}')
+    req.add_header('Content-Type', content_type)
+    with urllib.request.urlopen(req) as resp:
+        return json.loads(resp.read())
+
+
 # ── HTTP handler ──────────────────────────────────────────────────────────────
 
 class Handler(BaseHTTPRequestHandler):
@@ -263,6 +275,7 @@ class Handler(BaseHTTPRequestHandler):
                 scheduled_time = body.get('scheduledStartTime', '')
                 description    = body.get('description', '')
                 privacy        = body.get('privacy', 'unlisted')
+                thumbnail_url  = body.get('thumbnailUrl', '')
 
                 if not scheduled_time:
                     self._json(400, {'error': 'scheduledStartTime is required'})
@@ -307,11 +320,21 @@ class Handler(BaseHTTPRequestHandler):
                     method='POST', body=b'', token=token,
                 )
 
+                # 4. Upload thumbnail if provided (best-effort)
+                thumb_ok = False
+                if thumbnail_url:
+                    try:
+                        _upload_thumbnail(broadcast_id, thumbnail_url, token)
+                        thumb_ok = True
+                    except Exception:
+                        pass  # thumbnail failure doesn't fail the whole schedule
+
                 self._json(200, {
                     'ok':           True,
                     'broadcastId':  broadcast_id,
                     'broadcastUrl': f'https://youtu.be/{broadcast_id}',
                     'streamId':     stream_id,
+                    'thumbnailSet': thumb_ok,
                 })
             except urllib.error.HTTPError as exc:
                 err_body = exc.read().decode()
