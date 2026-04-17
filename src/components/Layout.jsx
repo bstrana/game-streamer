@@ -19,6 +19,12 @@ export default function Layout({ children }) {
           >
             Matches
           </Link>
+          <Link
+            to="/settings/youtube"
+            className={`nav-link ${location.pathname === '/settings/youtube' ? 'active' : ''}`}
+          >
+            YouTube
+          </Link>
         </nav>
         <div className="layout-user">
           <span className="user-name">

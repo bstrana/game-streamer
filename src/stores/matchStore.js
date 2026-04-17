@@ -110,3 +110,11 @@ export function deleteMatch(id) {
   const matches = load().filter((m) => m.id !== id);
   persist(matches);
 }
+
+export function setMatchYouTubeUrl(id, youtubeUrl) {
+  const matches = load();
+  const idx = matches.findIndex((m) => m.id === id);
+  if (idx === -1) return;
+  matches[idx] = { ...matches[idx], youtubeUrl, updatedAt: new Date().toISOString() };
+  persist(matches);
+}

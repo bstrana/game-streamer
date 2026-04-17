@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getMatches, deleteMatch, duplicateMatch } from '../stores/matchStore';
+import { getMatches, deleteMatch, duplicateMatch, setMatchYouTubeUrl } from '../stores/matchStore';
 
 const runtimeCfg = window.__APP_CONFIG__ || {};
 const BASE_URL = runtimeCfg.appBaseUrl || import.meta.env.VITE_APP_BASE_URL || window.location.origin;
@@ -18,7 +18,18 @@ function formatDateTime(iso) {
   }
 }
 
-function CopyButton({ text }) {
+function toDatetimeLocal(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  } catch {
+    return iso.slice(0, 16);
+  }
+}
+
+function CopyButton({ text, label = 'Copy' }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -28,12 +39,116 @@ function CopyButton({ text }) {
   };
   return (
     <button className="btn btn-ghost btn-sm" onClick={copy} title="Copy link">
-      {copied ? '✓ Copied' : 'Copy'}
+      {copied ? '✓ Copied' : label}
     </button>
   );
 }
 
-function MatchRow({ match, onDelete, onDuplicate }) {
+function ScheduleModal({ match, onClose, onScheduled }) {
+  const [title, setTitle]         = useState(`${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`);
+  const [scheduledTime, setTime]  = useState(toDatetimeLocal(match.time));
+  const [privacy, setPrivacy]     = useState('unlisted');
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [result, setResult]       = useState(null);
+
+  const handleSchedule = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const iso = new Date(scheduledTime).toISOString();
+      const res = await fetch('/api/youtube/schedule', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          title,
+          scheduledStartTime: iso,
+          description: match.location || '',
+          privacy,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setResult(data);
+      onScheduled(match.id, data.broadcastUrl);
+    } catch (e) {
+      setError(e.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Schedule on YouTube</h2>
+          <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+
+        {result ? (
+          <div className="modal-body">
+            <p style={{ color: 'var(--success)', fontWeight: 600, marginBottom: 10 }}>
+              ✓ Broadcast scheduled!
+            </p>
+            <p style={{ marginBottom: 20, fontSize: 13, wordBreak: 'break-all' }}>
+              <a href={result.broadcastUrl} target="_blank" rel="noopener noreferrer">
+                {result.broadcastUrl}
+              </a>
+            </p>
+            <button className="btn btn-primary" onClick={onClose}>Done</button>
+          </div>
+        ) : (
+          <div className="modal-body">
+            <div className="form-group" style={{ marginBottom: 14 }}>
+              <label className="form-label">Title</label>
+              <input
+                className="form-input"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 14 }}>
+              <label className="form-label">Scheduled Start</label>
+              <input
+                className="form-input"
+                type="datetime-local"
+                value={scheduledTime}
+                onChange={e => setTime(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 20 }}>
+              <label className="form-label">Privacy</label>
+              <select
+                className="form-input"
+                value={privacy}
+                onChange={e => setPrivacy(e.target.value)}
+              >
+                <option value="unlisted">Unlisted</option>
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+            {error && (
+              <p style={{ color: 'var(--danger)', marginBottom: 14, fontSize: 13 }}>{error}</p>
+            )}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleSchedule}
+                disabled={loading || !scheduledTime}
+              >
+                {loading ? 'Scheduling…' : 'Schedule'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected }) {
   const overlayUrl = `${BASE_URL}/overlay/${match.id}`;
 
   const handleDelete = () => {
@@ -60,21 +175,41 @@ function MatchRow({ match, onDelete, onDuplicate }) {
         <div className="match-actions">
           <Link to={`/match/${match.id}/edit`} className="btn btn-sm btn-outline">Edit</Link>
           <button className="btn btn-sm btn-outline" onClick={() => onDuplicate(match.id)}>Duplicate</button>
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => onScheduleYouTube(match)}
+            title={ytConnected ? 'Schedule on YouTube' : 'Connect YouTube in settings first'}
+          >
+            ▶ YouTube
+          </button>
           <button className="btn btn-sm btn-danger" onClick={handleDelete}>Delete</button>
         </div>
       </div>
+
       <div className="match-overlay-row">
         <span className="overlay-label">OBS URL</span>
         <code className="overlay-url">{overlayUrl}</code>
         <CopyButton text={overlayUrl} />
         <a href={overlayUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Preview</a>
       </div>
+
+      {match.youtubeUrl && (
+        <div className="match-overlay-row">
+          <span className="overlay-label" style={{ color: '#ff4444' }}>YouTube</span>
+          <code className="overlay-url">{match.youtubeUrl}</code>
+          <CopyButton text={match.youtubeUrl} />
+          <a href={match.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Open</a>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function Dashboard() {
-  const [matches, setMatches] = useState([]);
+  const navigate = useNavigate();
+  const [matches, setMatches]           = useState([]);
+  const [ytConnected, setYtConnected]   = useState(false);
+  const [schedulingMatch, setScheduling] = useState(null);
 
   const reload = () => {
     const all = getMatches();
@@ -89,6 +224,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     reload();
+    fetch('/api/youtube/status')
+      .then(r => r.json())
+      .then(d => setYtConnected(!!d.connected))
+      .catch(() => {});
   }, []);
 
   const handleDelete = (id) => {
@@ -98,6 +237,19 @@ export default function Dashboard() {
 
   const handleDuplicate = (id) => {
     duplicateMatch(id);
+    reload();
+  };
+
+  const handleScheduleYouTube = (match) => {
+    if (!ytConnected) {
+      navigate('/settings/youtube');
+      return;
+    }
+    setScheduling(match);
+  };
+
+  const handleScheduled = (id, url) => {
+    setMatchYouTubeUrl(id, url);
     reload();
   };
 
@@ -122,9 +274,27 @@ export default function Dashboard() {
       ) : (
         <div className="match-list">
           {matches.map((m) => (
-            <MatchRow key={m.id} match={m} onDelete={handleDelete} onDuplicate={handleDuplicate} />
+            <MatchRow
+              key={m.id}
+              match={m}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+              onScheduleYouTube={handleScheduleYouTube}
+              ytConnected={ytConnected}
+            />
           ))}
         </div>
+      )}
+
+      {schedulingMatch && (
+        <ScheduleModal
+          match={schedulingMatch}
+          onClose={() => setScheduling(null)}
+          onScheduled={(id, url) => {
+            handleScheduled(id, url);
+            setScheduling(null);
+          }}
+        />
       )}
     </Layout>
   );

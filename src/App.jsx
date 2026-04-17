@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import MatchEdit from './pages/MatchEdit';
 import Overlay from './pages/Overlay';
 import OverlayDirect from './pages/OverlayDirect';
+import YouTubeSettings from './pages/YouTubeSettings';
+import YouTubeCallback from './pages/YouTubeCallback';
 
 function LoadingScreen() {
   return (
@@ -39,11 +41,15 @@ function AppRoutes() {
         <Route path="/overlay/game/:gameId" element={<OverlayDirect />} />
         <Route path="/overlay/:matchId" element={<Overlay />} />
 
+        {/* ── Public: YouTube OAuth callback (code expires fast, skip Keycloak wait) ── */}
+        <Route path="/youtube/callback" element={<YouTubeCallback />} />
+
         {/* ── Protected: management UI ── */}
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/match/new" element={<MatchEdit />} />
           <Route path="/match/:id/edit" element={<MatchEdit />} />
+          <Route path="/settings/youtube" element={<YouTubeSettings />} />
         </Route>
 
         {/* Catch-all */}
