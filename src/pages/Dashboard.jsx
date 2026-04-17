@@ -44,13 +44,26 @@ function CopyButton({ text, label = 'Copy' }) {
   );
 }
 
+function buildDescription(match) {
+  const lines = [];
+  if (match.competition)  lines.push(`Competition: ${match.competition}`);
+  if (match.time)         lines.push(`Date: ${formatDateTime(match.time)}`);
+  if (match.location)     lines.push(`Location: ${match.location}`);
+  if (match.gameId)       lines.push(`Game ID: #${match.gameId}`);
+  if (match.awayLogoUrl)  lines.push(`Away logo: ${match.awayLogoUrl}`);
+  if (match.homeLogoUrl)  lines.push(`Home logo: ${match.homeLogoUrl}`);
+  return lines.join('\n');
+}
+
 function ScheduleModal({ match, onClose, onScheduled }) {
-  const [title, setTitle]         = useState(`${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`);
-  const [scheduledTime, setTime]  = useState(toDatetimeLocal(match.time));
-  const [privacy, setPrivacy]     = useState('unlisted');
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
-  const [result, setResult]       = useState(null);
+  const [title, setTitle]           = useState(`${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`);
+  const [scheduledTime, setTime]    = useState(toDatetimeLocal(match.time));
+  const [privacy, setPrivacy]       = useState('unlisted');
+  const [description, setDesc]      = useState(buildDescription(match));
+  const [thumbnailUrl, setThumbUrl] = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [result, setResult]         = useState(null);
 
   const handleSchedule = async () => {
     setLoading(true);
@@ -63,8 +76,9 @@ function ScheduleModal({ match, onClose, onScheduled }) {
         body:    JSON.stringify({
           title,
           scheduledStartTime: iso,
-          description: match.location || '',
+          description,
           privacy,
+          thumbnailUrl: thumbnailUrl.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -116,7 +130,7 @@ function ScheduleModal({ match, onClose, onScheduled }) {
                 onChange={e => setTime(e.target.value)}
               />
             </div>
-            <div className="form-group" style={{ marginBottom: 20 }}>
+            <div className="form-group" style={{ marginBottom: 14 }}>
               <label className="form-label">Privacy</label>
               <select
                 className="form-input"
@@ -127,6 +141,26 @@ function ScheduleModal({ match, onClose, onScheduled }) {
                 <option value="public">Public</option>
                 <option value="private">Private</option>
               </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: 14 }}>
+              <label className="form-label">Description</label>
+              <textarea
+                className="form-input"
+                rows={5}
+                style={{ resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 12 }}
+                value={description}
+                onChange={e => setDesc(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 20 }}>
+              <label className="form-label">Thumbnail URL <span className="label-hint">(optional)</span></label>
+              <input
+                className="form-input"
+                type="url"
+                placeholder="https://…/thumbnail.jpg"
+                value={thumbnailUrl}
+                onChange={e => setThumbUrl(e.target.value)}
+              />
             </div>
             {error && (
               <p style={{ color: 'var(--danger)', marginBottom: 14, fontSize: 13 }}>{error}</p>
