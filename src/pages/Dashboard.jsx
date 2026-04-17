@@ -113,7 +113,16 @@ function MatchRow({ match, onDelete, onDuplicate }) {
 export default function Dashboard() {
   const [matches, setMatches] = useState([]);
 
-  const reload = () => setMatches(getMatches());
+  const reload = () => {
+    const all = getMatches();
+    all.sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return b.time.localeCompare(a.time);
+    });
+    setMatches(all);
+  };
 
   useEffect(() => {
     reload();
