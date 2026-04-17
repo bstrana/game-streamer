@@ -4,7 +4,7 @@
   "author": "bstrana",
   "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
   "tagline": "Baseball scoreboard overlay for OBS streaming",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "manifestVersion": 2,
   "minBoxVersion": "9.1.0",
   "website": "https://github.com/bstrana/game-streamer",
@@ -28,6 +28,14 @@
     "APP_BASE_URL": {
       "description": "Public URL of this app (used for overlay link generation)",
       "value": "https://gamestreamer.example.com"
+    },
+    "GOOGLE_CLIENT_ID": {
+      "description": "Google OAuth 2.0 client ID for YouTube scheduling (optional)",
+      "value": ""
+    },
+    "GOOGLE_CLIENT_SECRET": {
+      "description": "Google OAuth 2.0 client secret for YouTube scheduling (optional)",
+      "value": ""
     }
   },
   "icon": "file://appicon.png",
@@ -36,7 +44,7 @@
   "mediaLinks": [
     "https://bstrana.sirv.com/ybc/ybc-logo.png"
   ],
-  "changelog": "Compact dashboard cards with inline date/time, location and game ID chips; games sorted newest first; duplicate match option.",
+  "changelog": "YouTube live stream scheduling: connect Google account, schedule broadcasts from match cards, broadcast URL stored per match.",
   "packagerName": "bstrana",
   "packagerUrl": "https://github.com/bstrana"
 }
