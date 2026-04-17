@@ -89,6 +89,23 @@ export function updateMatch(id, data) {
   return updated;
 }
 
+export function duplicateMatch(id) {
+  const matches = load();
+  const original = matches.find((m) => m.id === id);
+  if (!original) return null;
+  const now = new Date().toISOString();
+  const copy = {
+    ...original,
+    id: uuidv4(),
+    gameId: '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  matches.push(copy);
+  persist(matches);
+  return copy;
+}
+
 export function deleteMatch(id) {
   const matches = load().filter((m) => m.id !== id);
   persist(matches);
