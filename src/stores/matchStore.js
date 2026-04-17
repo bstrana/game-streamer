@@ -1,120 +1,76 @@
-import { v4 as uuidv4 } from 'uuid';
+const API = '/api/matches';
 
-const STORAGE_KEY = 'game-streamer-matches';
-
-/**
- * @typedef {Object} Match
- * @property {string} id
- * @property {string} awayTeam
- * @property {string} homeTeam
- * @property {string} time        - ISO datetime string
- * @property {string} location
- * @property {string} competition
- * @property {string} gameId      - WBSC game ID (optional)
- * @property {string} createdAt
- * @property {string} updatedAt
- */
-
-function load() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  } catch {
-    return [];
-  }
+export async function getMatches() {
+  const r = await fetch(API);
+  const d = await r.json();
+  return d.matches || [];
 }
 
-function persist(matches) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
+export async function getMatch(id) {
+  const r = await fetch(`${API}/${id}`);
+  if (!r.ok) return null;
+  return r.json();
 }
 
-// Push scoreboard settings to the server-side API so the OBS script can
-// fetch them by game ID. Fire-and-forget — errors are silently ignored.
-function pushGameSettings(match) {
-  if (!match.gameId) return;
-  const payload = {
-    away:       match.awayTeam           || '',
-    home:       match.homeTeam           || '',
-    awayColor:  match.awayPrimaryColor   || '#808080',
-    awayColor2: match.awaySecondaryColor || '#606060',
-    homeColor:  match.homePrimaryColor   || '#808080',
-    homeColor2: match.homeSecondaryColor || '#606060',
-    awayLogo:   match.awayLogoUrl        || '',
-    homeLogo:   match.homeLogoUrl        || '',
-    replay:     match.replay             || false,
-  };
-  fetch(`/api/game-settings/${match.gameId}`, {
+export async function createMatch(data) {
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return r.json();
+}
+
+export async function updateMatch(id, data) {
+  const r = await fetch(`${API}/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
+    body: JSON.stringify(data),
+  });
+  return r.json();
 }
 
-export function getMatches() {
-  return load();
+export async function deleteMatch(id) {
+  await fetch(`${API}/${id}`, { method: 'DELETE' });
 }
 
-export function getMatch(id) {
-  return load().find((m) => m.id === id) || null;
+export async function duplicateMatch(id) {
+  const match = await getMatch(id);
+  if (!match) return null;
+  // eslint-disable-next-line no-unused-vars
+  const { id: _id, createdAt: _ca, updatedAt: _ua, youtubeUrl: _yt, ...rest } = match;
+  return createMatch(rest);
 }
 
-export function createMatch(data) {
-  const matches = load();
-  const now = new Date().toISOString();
-  const match = {
-    id: uuidv4(),
-    awayTeam: '',
-    homeTeam: '',
-    time: '',
-    location: '',
-    competition: '',
-    gameId: '',
-    ...data,
-    createdAt: now,
-    updatedAt: now,
-  };
-  matches.push(match);
-  persist(matches);
-  pushGameSettings(match);
-  return match;
+export async function setMatchYouTubeUrl(id, youtubeUrl) {
+  return updateMatch(id, { youtubeUrl });
 }
 
-export function updateMatch(id, data) {
-  const matches = load();
-  const idx = matches.findIndex((m) => m.id === id);
-  if (idx === -1) return null;
-  const updated = { ...matches[idx], ...data, updatedAt: new Date().toISOString() };
-  matches[idx] = updated;
-  persist(matches);
-  pushGameSettings(updated);
-  return updated;
-}
+// One-time migration: move any existing localStorage matches to the server.
+// Safe to call on every load — exits immediately if server already has data
+// or localStorage is empty.
+export async function migrateFromLocalStorage() {
+  const LEGACY_KEY = 'game-streamer-matches';
+  const raw = localStorage.getItem(LEGACY_KEY);
+  if (!raw) return 0;
+  let old;
+  try { old = JSON.parse(raw); } catch { localStorage.removeItem(LEGACY_KEY); return 0; }
+  if (!Array.isArray(old) || !old.length) { localStorage.removeItem(LEGACY_KEY); return 0; }
 
-export function duplicateMatch(id) {
-  const matches = load();
-  const original = matches.find((m) => m.id === id);
-  if (!original) return null;
-  const now = new Date().toISOString();
-  const copy = {
-    ...original,
-    id: uuidv4(),
-    gameId: '',
-    createdAt: now,
-    updatedAt: now,
-  };
-  matches.push(copy);
-  persist(matches);
-  return copy;
-}
+  const existing = await getMatches();
+  if (existing.length > 0) {
+    // Server already has authoritative data — just drop the stale local copy.
+    localStorage.removeItem(LEGACY_KEY);
+    return 0;
+  }
 
-export function deleteMatch(id) {
-  const matches = load().filter((m) => m.id !== id);
-  persist(matches);
-}
-
-export function setMatchYouTubeUrl(id, youtubeUrl) {
-  const matches = load();
-  const idx = matches.findIndex((m) => m.id === id);
-  if (idx === -1) return;
-  matches[idx] = { ...matches[idx], youtubeUrl, updatedAt: new Date().toISOString() };
-  persist(matches);
+  for (const match of old) {
+    await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(match),
+    });
+  }
+  localStorage.removeItem(LEGACY_KEY);
+  return old.length;
 }

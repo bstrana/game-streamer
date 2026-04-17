@@ -2,6 +2,13 @@
 """
 Game Streamer – backend API server
 
+Endpoints – matches (persistent storage in /app/data/matches.json):
+  GET    /api/matches              – list all matches
+  GET    /api/matches/:id          – get single match
+  POST   /api/matches              – create match (server assigns UUID)
+  PUT    /api/matches/:id          – update match
+  DELETE /api/matches/:id          – delete match
+
 Endpoints – game settings (OBS Lua integration):
   GET  /api/game-settings/{gameId}  – return stored settings JSON
   PUT  /api/game-settings/{gameId}  – save settings JSON
@@ -18,13 +25,16 @@ import json
 import os
 import re
 import time
+import uuid as _uuid
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 DATA_DIR      = os.environ.get('APP_DATA', '/app/data')
 SETTINGS_DIR  = os.path.join(DATA_DIR, 'game-settings')
+MATCHES_FILE  = os.path.join(DATA_DIR, 'matches.json')
 TOKENS_FILE   = os.path.join(DATA_DIR, 'youtube-tokens.json')
 os.makedirs(SETTINGS_DIR, exist_ok=True)
 
@@ -32,9 +42,10 @@ GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 APP_BASE_URL         = os.environ.get('APP_BASE_URL', '').rstrip('/')
 
-GAME_ID_RE = re.compile(r'^/api/game-settings/(\d{1,20})$')
+GAME_ID_RE  = re.compile(r'^/api/game-settings/(\d{1,20})$')
+MATCH_ID_RE = re.compile(r'^/api/matches/([0-9a-f\-]{36})$')
 
-ALLOWED_KEYS = {
+ALLOWED_SETTINGS_KEYS = {
     'away', 'home',
     'awayColor', 'awayColor2',
     'homeColor', 'homeColor2',
@@ -46,6 +57,50 @@ GOOGLE_AUTH_URL  = 'https://accounts.google.com/o/oauth2/v2/auth'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 YT_API_BASE      = 'https://www.googleapis.com/youtube/v3'
 YT_SCOPES        = 'https://www.googleapis.com/auth/youtube'
+
+
+# ── Matches storage ───────────────────────────────────────────────────────────
+
+def _now_iso():
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+
+def _load_matches():
+    if not os.path.exists(MATCHES_FILE):
+        return []
+    try:
+        with open(MATCHES_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _save_matches(matches):
+    tmp = MATCHES_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(matches, f)
+    os.replace(tmp, MATCHES_FILE)
+
+
+def _sync_game_settings(match):
+    """Write game-settings file whenever a match with a numeric gameId is saved."""
+    game_id = str(match.get('gameId', '')).strip()
+    if not game_id or not game_id.isdigit():
+        return
+    payload = {
+        'away':      match.get('awayTeam', ''),
+        'home':      match.get('homeTeam', ''),
+        'awayColor': match.get('awayPrimaryColor', '#808080'),
+        'awayColor2': match.get('awaySecondaryColor', '#606060'),
+        'homeColor': match.get('homePrimaryColor', '#808080'),
+        'homeColor2': match.get('homeSecondaryColor', '#606060'),
+        'awayLogo':  match.get('awayLogoUrl', ''),
+        'homeLogo':  match.get('homeLogoUrl', ''),
+        'replay':    match.get('replay', False),
+    }
+    path = os.path.join(SETTINGS_DIR, f'{game_id}.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(payload, f)
 
 
 # ── YouTube helpers ───────────────────────────────────────────────────────────
@@ -116,7 +171,7 @@ def _upload_thumbnail(broadcast_id, thumbnail_url, token):
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
-        pass  # suppress noisy access log
+        pass
 
     def _cors(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -135,10 +190,6 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get('Content-Length') or 0)
         return self.rfile.read(length)
 
-    def _game_id(self):
-        m = GAME_ID_RE.match(self.path)
-        return m.group(1) if m else None
-
     # ── Routing ───────────────────────────────────────────────────────────
 
     def do_OPTIONS(self):
@@ -149,15 +200,22 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_get()
+        elif self.path.startswith('/api/matches'):
+            self._matches_get()
         else:
             self._settings_get()
 
     def do_PUT(self):
-        self._settings_put()
+        if self.path.startswith('/api/matches/'):
+            self._matches_put()
+        else:
+            self._settings_put()
 
     def do_POST(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_post()
+        elif self.path.startswith('/api/matches'):
+            self._matches_post()
         else:
             self.send_response(404)
             self.end_headers()
@@ -167,9 +225,89 @@ class Handler(BaseHTTPRequestHandler):
             if os.path.exists(TOKENS_FILE):
                 os.remove(TOKENS_FILE)
             self._json(200, {'ok': True})
+        elif self.path.startswith('/api/matches/'):
+            self._matches_delete()
         else:
             self.send_response(404)
             self.end_headers()
+
+    # ── Matches CRUD ──────────────────────────────────────────────────────
+
+    def _matches_get(self):
+        m = MATCH_ID_RE.match(self.path)
+        if m:
+            match_id = m.group(1)
+            match = next((x for x in _load_matches() if x['id'] == match_id), None)
+            if match:
+                self._json(200, match)
+            else:
+                self._json(404, {'error': 'not found'})
+        elif self.path == '/api/matches':
+            self._json(200, {'matches': _load_matches()})
+        else:
+            self._json(404, {'error': 'not found'})
+
+    def _matches_post(self):
+        if self.path != '/api/matches':
+            self._json(404, {'error': 'not found'})
+            return
+        try:
+            data = json.loads(self._body())
+            now = _now_iso()
+            match = {
+                'awayTeam': '',
+                'homeTeam': '',
+                'time': '',
+                'location': '',
+                'competition': '',
+                'gameId': '',
+                **data,
+                'id': data.get('id') or str(_uuid.uuid4()),
+                'createdAt': data.get('createdAt') or now,
+                'updatedAt': now,
+            }
+            matches = _load_matches()
+            matches.append(match)
+            _save_matches(matches)
+            _sync_game_settings(match)
+            self._json(201, match)
+        except Exception as exc:
+            self._json(400, {'error': str(exc)})
+
+    def _matches_put(self):
+        m = MATCH_ID_RE.match(self.path)
+        if not m:
+            self._json(404, {'error': 'not found'})
+            return
+        match_id = m.group(1)
+        try:
+            data = json.loads(self._body())
+            matches = _load_matches()
+            idx = next((i for i, x in enumerate(matches) if x['id'] == match_id), -1)
+            if idx == -1:
+                self._json(404, {'error': 'not found'})
+                return
+            updated = {**matches[idx], **data, 'id': match_id, 'updatedAt': _now_iso()}
+            matches[idx] = updated
+            _save_matches(matches)
+            _sync_game_settings(updated)
+            self._json(200, updated)
+        except Exception as exc:
+            self._json(400, {'error': str(exc)})
+
+    def _matches_delete(self):
+        m = MATCH_ID_RE.match(self.path)
+        if not m:
+            self._json(404, {'error': 'not found'})
+            return
+        match_id = m.group(1)
+        matches = _load_matches()
+        new_matches = [x for x in matches if x['id'] != match_id]
+        if len(new_matches) == len(matches):
+            self._json(404, {'error': 'not found'})
+            return
+        _save_matches(new_matches)
+        self._json(200, {'ok': True})
 
     # ── Game-settings ─────────────────────────────────────────────────────
 
@@ -199,13 +337,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             incoming = json.loads(self._body())
-            filtered = {k: incoming[k] for k in ALLOWED_KEYS if k in incoming}
+            filtered = {k: incoming[k] for k in ALLOWED_SETTINGS_KEYS if k in incoming}
             path = os.path.join(SETTINGS_DIR, f'{gid}.json')
             with open(path, 'w', encoding='utf-8') as f:
                 json.dump(filtered, f)
             self._json(200, {'ok': True})
         except Exception as exc:
             self._json(400, {'error': str(exc)})
+
+    def _game_id(self):
+        m = GAME_ID_RE.match(self.path)
+        return m.group(1) if m else None
 
     # ── YouTube OAuth & scheduling ────────────────────────────────────────
 
@@ -327,7 +469,7 @@ class Handler(BaseHTTPRequestHandler):
                         _upload_thumbnail(broadcast_id, thumbnail_url, token)
                         thumb_ok = True
                     except Exception:
-                        pass  # thumbnail failure doesn't fail the whole schedule
+                        pass
 
                 self._json(200, {
                     'ok':           True,

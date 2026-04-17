@@ -4,9 +4,10 @@
  *
  * Route: /overlay/:matchId
  *
- * - Loads match data from localStorage
- * - Polls WBSC API every 10 s when a gameId is set
- * - Renders transparent-background scoreboard overlay
+ * - Loads match data from the server API (works in OBS browser source)
+ * - Polls the API every 10 s so live edits (replay toggle, gameId, colors)
+ *   are picked up without reloading the OBS source
+ * - Polls WBSC live game data every 10 s when a gameId is set
  */
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -20,12 +21,23 @@ export default function Overlay() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const m = getMatch(matchId);
-    if (!m) {
-      setNotFound(true);
-    } else {
-      setMatch(m);
+    let cancelled = false;
+
+    async function load() {
+      const m = await getMatch(matchId);
+      if (cancelled) return;
+      if (!m) {
+        setNotFound(true);
+      } else {
+        setMatch(m);
+        setNotFound(false);
+      }
     }
+
+    load();
+    // Poll every 10 s — picks up edits made in the management UI
+    const timer = setInterval(load, 10_000);
+    return () => { cancelled = true; clearInterval(timer); };
   }, [matchId]);
 
   const { gameData, loading, error } = useGameData(match?.gameId || '', match?.replay || false);
