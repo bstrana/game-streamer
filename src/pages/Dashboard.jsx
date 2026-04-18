@@ -85,7 +85,7 @@ function ScheduleModal({ match, onClose, onScheduled }) {
   const [title, setTitle]           = useState(`${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`);
   const [scheduledTime, setTime]    = useState(toDatetimeLocal(match.time));
   const [privacy, setPrivacy]       = useState('unlisted');
-  const [description, setDesc]      = useState(buildDescription(match));
+  const [description, setDesc]      = useState(match.streamDescription || buildDescription(match));
   const [thumbnailUrl, setThumbUrl] = useState('');
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
@@ -194,7 +194,7 @@ function BulkScheduleModal({ matches, onClose, onScheduled }) {
           body:    JSON.stringify({
             title:              `${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`,
             scheduledStartTime: new Date(match.time).toISOString(),
-            description:        buildDescription(match),
+            description:        match.streamDescription || buildDescription(match),
             privacy,
           }),
         });

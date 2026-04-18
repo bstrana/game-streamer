@@ -10,6 +10,7 @@ const EMPTY_FORM = {
   location: '',
   competition: '',
   gameId: '',
+  streamDescription: '',
   awayPrimaryColor: '#c0392b',
   awaySecondaryColor: '#7b241c',
   awayLogoUrl: '',
@@ -55,6 +56,7 @@ export default function MatchEdit() {
           location: match.location,
           competition: match.competition,
           gameId: match.gameId,
+          streamDescription: match.streamDescription || '',
           awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
           awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
           awayLogoUrl: match.awayLogoUrl || '',
@@ -239,6 +241,23 @@ export default function MatchEdit() {
                 scheduled match info on the overlay.
               </p>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="streamDescription" className="form-label">
+              Stream Description
+              <span className="label-hint">(pre-fills the YouTube schedule description)</span>
+            </label>
+            <textarea
+              id="streamDescription"
+              name="streamDescription"
+              className="form-input"
+              rows={4}
+              style={{ resize: 'vertical' }}
+              placeholder="Optional description shown on the YouTube broadcast…"
+              value={form.streamDescription}
+              onChange={handleChange}
+            />
           </div>
 
           <div className="form-group">

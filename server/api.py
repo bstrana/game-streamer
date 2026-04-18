@@ -55,6 +55,7 @@ MATCH_STR_LIMITS = {
     'awayTeam': 120, 'homeTeam': 120,
     'location': 256, 'competition': 200,
     'gameId': 20,
+    'streamDescription': 5000,
     'awayLogoUrl': 2048, 'homeLogoUrl': 2048,
     'awayPrimaryColor': 7, 'awaySecondaryColor': 7,
     'homePrimaryColor': 7, 'homeSecondaryColor': 7,
