@@ -1,15 +1,29 @@
 const API = '/api/matches';
 
+async function _checkOk(r, context) {
+  if (!r.ok) throw new Error(`${context} failed: ${r.status}`);
+  return r;
+}
+
 export async function getMatches() {
-  const r = await fetch(API);
-  const d = await r.json();
-  return d.matches || [];
+  try {
+    const r = await fetch(API);
+    if (!r.ok) return [];
+    const d = await r.json();
+    return d.matches || [];
+  } catch {
+    return [];
+  }
 }
 
 export async function getMatch(id) {
-  const r = await fetch(`${API}/${id}`);
-  if (!r.ok) return null;
-  return r.json();
+  try {
+    const r = await fetch(`${API}/${id}`);
+    if (!r.ok) return null;
+    return r.json();
+  } catch {
+    return null;
+  }
 }
 
 export async function createMatch(data) {
@@ -18,6 +32,7 @@ export async function createMatch(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  await _checkOk(r, 'createMatch');
   return r.json();
 }
 
@@ -27,11 +42,13 @@ export async function updateMatch(id, data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  await _checkOk(r, 'updateMatch');
   return r.json();
 }
 
 export async function deleteMatch(id) {
-  await fetch(`${API}/${id}`, { method: 'DELETE' });
+  const r = await fetch(`${API}/${id}`, { method: 'DELETE' });
+  if (!r.ok) throw new Error(`deleteMatch failed: ${r.status}`);
 }
 
 export async function duplicateMatch(id) {
@@ -47,8 +64,6 @@ export async function setMatchYouTubeUrl(id, youtubeUrl) {
 }
 
 // One-time migration: move any existing localStorage matches to the server.
-// Safe to call on every load — exits immediately if server already has data
-// or localStorage is empty.
 export async function migrateFromLocalStorage() {
   const LEGACY_KEY = 'game-streamer-matches';
   const raw = localStorage.getItem(LEGACY_KEY);
@@ -59,18 +74,21 @@ export async function migrateFromLocalStorage() {
 
   const existing = await getMatches();
   if (existing.length > 0) {
-    // Server already has authoritative data — just drop the stale local copy.
     localStorage.removeItem(LEGACY_KEY);
     return 0;
   }
 
+  let migrated = 0;
   for (const match of old) {
-    await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(match),
-    });
+    try {
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(match),
+      });
+      migrated++;
+    } catch { /* skip individual failures */ }
   }
   localStorage.removeItem(LEGACY_KEY);
-  return old.length;
+  return migrated;
 }

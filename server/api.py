@@ -24,7 +24,9 @@ Endpoints – YouTube scheduling:
 import json
 import os
 import re
+import sys
 import time
+import traceback
 import uuid as _uuid
 import urllib.error
 import urllib.parse
@@ -44,6 +46,34 @@ APP_BASE_URL         = os.environ.get('APP_BASE_URL', '').rstrip('/')
 
 GAME_ID_RE  = re.compile(r'^/api/game-settings/(\d{1,20})$')
 MATCH_ID_RE = re.compile(r'^/api/matches/([0-9a-f\-]{36})$')
+HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$')
+
+THUMBNAIL_MAX_BYTES = 2 * 1024 * 1024   # 2 MB
+REQUEST_MAX_BYTES   = 64 * 1024         # 64 KB for JSON bodies
+
+MATCH_STR_LIMITS = {
+    'awayTeam': 120, 'homeTeam': 120,
+    'location': 256, 'competition': 200,
+    'gameId': 20,
+    'awayLogoUrl': 2048, 'homeLogoUrl': 2048,
+    'awayPrimaryColor': 7, 'awaySecondaryColor': 7,
+    'homePrimaryColor': 7, 'homeSecondaryColor': 7,
+    'youtubeUrl': 2048, 'streamUrl': 2048,
+}
+COLOR_FIELDS = {'awayPrimaryColor', 'awaySecondaryColor', 'homePrimaryColor', 'homeSecondaryColor'}
+
+def _validate_match(data):
+    for field, max_len in MATCH_STR_LIMITS.items():
+        val = data.get(field)
+        if val is not None and isinstance(val, str) and len(val) > max_len:
+            raise ValueError(f'{field} too long (max {max_len})')
+    for f in COLOR_FIELDS:
+        val = data.get(f)
+        if val and not HEX_COLOR_RE.match(val):
+            raise ValueError(f'{f} must be a 3- or 6-digit hex color')
+
+def _log_exc(context=''):
+    print(f'[api] {context}: {traceback.format_exc()}', file=sys.stderr, flush=True)
 
 ALLOWED_SETTINGS_KEYS = {
     'away', 'home',
@@ -156,14 +186,24 @@ def _yt(path, method='GET', body=None, token=None):
 
 
 def _upload_thumbnail(broadcast_id, thumbnail_url, token):
-    with urllib.request.urlopen(thumbnail_url, timeout=15) as resp:
-        image_data    = resp.read()
-        content_type  = resp.headers.get('Content-Type', 'image/jpeg').split(';')[0].strip()
+    parsed = urllib.parse.urlparse(thumbnail_url)
+    if parsed.scheme != 'https':
+        raise ValueError('Thumbnail URL must use HTTPS')
+    # Fetch image with tight timeout and size cap to prevent SSRF/DoS
+    req = urllib.request.Request(thumbnail_url)
+    req.add_header('User-Agent', 'GameStreamer-thumbnail/1.0')
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        content_type = resp.headers.get('Content-Type', 'image/jpeg').split(';')[0].strip()
+        if not content_type.startswith('image/'):
+            raise ValueError(f'URL did not return an image (got {content_type})')
+        image_data = resp.read(THUMBNAIL_MAX_BYTES + 1)
+    if len(image_data) > THUMBNAIL_MAX_BYTES:
+        raise ValueError('Thumbnail exceeds 2 MB limit')
     url = f'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={broadcast_id}&uploadType=media'
-    req = urllib.request.Request(url, data=image_data, method='POST')
-    req.add_header('Authorization', f'Bearer {token}')
-    req.add_header('Content-Type', content_type)
-    with urllib.request.urlopen(req) as resp:
+    upload_req = urllib.request.Request(url, data=image_data, method='POST')
+    upload_req.add_header('Authorization', f'Bearer {token}')
+    upload_req.add_header('Content-Type', content_type)
+    with urllib.request.urlopen(upload_req) as resp:
         return json.loads(resp.read())
 
 
@@ -188,6 +228,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _body(self):
         length = int(self.headers.get('Content-Length') or 0)
+        if length > REQUEST_MAX_BYTES:
+            raise ValueError(f'Request body too large ({length} bytes)')
         return self.rfile.read(length)
 
     # ── Routing ───────────────────────────────────────────────────────────
@@ -253,6 +295,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             data = json.loads(self._body())
+            _validate_match(data)
             now = _now_iso()
             match = {
                 'awayTeam': '',
@@ -271,8 +314,11 @@ class Handler(BaseHTTPRequestHandler):
             _save_matches(matches)
             _sync_game_settings(match)
             self._json(201, match)
-        except Exception as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('_matches_post')
+            self._json(500, {'error': 'Internal server error'})
 
     def _matches_put(self):
         m = MATCH_ID_RE.match(self.path)
@@ -282,6 +328,7 @@ class Handler(BaseHTTPRequestHandler):
         match_id = m.group(1)
         try:
             data = json.loads(self._body())
+            _validate_match(data)
             matches = _load_matches()
             idx = next((i for i, x in enumerate(matches) if x['id'] == match_id), -1)
             if idx == -1:
@@ -292,8 +339,11 @@ class Handler(BaseHTTPRequestHandler):
             _save_matches(matches)
             _sync_game_settings(updated)
             self._json(200, updated)
-        except Exception as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('_matches_put')
+            self._json(500, {'error': 'Internal server error'})
 
     def _matches_delete(self):
         m = MATCH_ID_RE.match(self.path)
@@ -342,8 +392,11 @@ class Handler(BaseHTTPRequestHandler):
             with open(path, 'w', encoding='utf-8') as f:
                 json.dump(filtered, f)
             self._json(200, {'ok': True})
-        except Exception as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('_settings_put')
+            self._json(500, {'error': 'Internal server error'})
 
     def _game_id(self):
         m = GAME_ID_RE.match(self.path)
