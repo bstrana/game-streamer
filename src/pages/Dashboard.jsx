@@ -59,7 +59,6 @@ function buildDescription(match) {
   if (match.competition)  lines.push(`Competition: ${match.competition}`);
   if (match.time)         lines.push(`Date: ${formatDateTime(match.time)}`);
   if (match.location)     lines.push(`Location: ${match.location}`);
-  if (match.gameId)       lines.push(`Game ID: #${match.gameId}`);
   return lines.join('\n');
 }
 
