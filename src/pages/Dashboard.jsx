@@ -60,8 +60,6 @@ function buildDescription(match) {
   if (match.time)         lines.push(`Date: ${formatDateTime(match.time)}`);
   if (match.location)     lines.push(`Location: ${match.location}`);
   if (match.gameId)       lines.push(`Game ID: #${match.gameId}`);
-  if (match.awayLogoUrl)  lines.push(`Away logo: ${match.awayLogoUrl}`);
-  if (match.homeLogoUrl)  lines.push(`Home logo: ${match.homeLogoUrl}`);
   return lines.join('\n');
 }
 
