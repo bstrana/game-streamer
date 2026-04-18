@@ -25,7 +25,6 @@ function toDatetimeLocal(iso) {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    // format as YYYY-MM-DDTHH:MM for datetime-local input
     const pad = (n) => String(n).padStart(2, '0');
     return (
       `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
@@ -34,6 +33,18 @@ function toDatetimeLocal(iso) {
   } catch {
     return '';
   }
+}
+
+function buildAutoDescription({ competition, time, location }) {
+  const lines = [];
+  if (competition) lines.push(`Competition: ${competition}`);
+  if (time) {
+    try {
+      lines.push(`Date: ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(time))}`);
+    } catch { lines.push(`Date: ${time}`); }
+  }
+  if (location) lines.push(`Location: ${location}`);
+  return lines.join('\n');
 }
 
 export default function MatchEdit() {
@@ -56,7 +67,7 @@ export default function MatchEdit() {
           location: match.location,
           competition: match.competition,
           gameId: match.gameId,
-          streamDescription: match.streamDescription || '',
+          streamDescription: match.streamDescription || buildAutoDescription(match),
           awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
           awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
           awayLogoUrl: match.awayLogoUrl || '',
