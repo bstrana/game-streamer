@@ -868,6 +868,34 @@
       "creationDate": "Fri, 17 Apr 2026 20:00:00 GMT",
       "ts": "Fri, 17 Apr 2026 20:00:00 GMT",
       "publishState": "published"
+    },
+    "1.5.0": {
+      "manifest": {
+        "id": "io.github.bstrana.game-streamer",
+        "title": "Game Streamer",
+        "author": "bstrana",
+        "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
+        "tagline": "Baseball scoreboard overlay for OBS streaming",
+        "version": "1.5.0",
+        "manifestVersion": 2,
+        "minBoxVersion": "9.1.0",
+        "website": "https://github.com/bstrana/game-streamer",
+        "contactEmail": "support@example.com",
+        "healthCheckPath": "/health",
+        "httpPort": 8000,
+        "dockerImage": "ghcr.io/bstrana/game-streamer:1.5.0",
+        "addons": { "localstorage": {} },
+        "icon": "file://appicon.png",
+        "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
+        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
+        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "changelog": "Mobile-first redesign with bottom tab bar and PWA support; security hardening (SSRF fix, input validation, exception hardening).",
+        "packagerName": "bstrana",
+        "packagerUrl": "https://github.com/bstrana"
+      },
+      "creationDate": "Sat, 18 Apr 2026 10:00:00 GMT",
+      "ts": "Sat, 18 Apr 2026 10:00:00 GMT",
+      "publishState": "published"
     }
   }
 }
