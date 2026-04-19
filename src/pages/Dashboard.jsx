@@ -59,9 +59,6 @@ function buildDescription(match) {
   if (match.competition)  lines.push(`Competition: ${match.competition}`);
   if (match.time)         lines.push(`Date: ${formatDateTime(match.time)}`);
   if (match.location)     lines.push(`Location: ${match.location}`);
-  if (match.gameId)       lines.push(`Game ID: #${match.gameId}`);
-  if (match.awayLogoUrl)  lines.push(`Away logo: ${match.awayLogoUrl}`);
-  if (match.homeLogoUrl)  lines.push(`Home logo: ${match.homeLogoUrl}`);
   return lines.join('\n');
 }
 
@@ -88,7 +85,7 @@ function ScheduleModal({ match, onClose, onScheduled }) {
   const [title, setTitle]           = useState(`${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`);
   const [scheduledTime, setTime]    = useState(toDatetimeLocal(match.time));
   const [privacy, setPrivacy]       = useState('unlisted');
-  const [description, setDesc]      = useState(buildDescription(match));
+  const [description, setDesc]      = useState(match.streamDescription || buildDescription(match));
   const [thumbnailUrl, setThumbUrl] = useState('');
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
@@ -113,7 +110,7 @@ function ScheduleModal({ match, onClose, onScheduled }) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
-      onScheduled(match.id, data.broadcastUrl);
+      onScheduled(match.id, data.broadcastUrl, data.broadcastId);
     } catch (e) {
       setError(e.message);
     }
@@ -197,14 +194,14 @@ function BulkScheduleModal({ matches, onClose, onScheduled }) {
           body:    JSON.stringify({
             title:              `${match.awayTeam || 'Away'} vs ${match.homeTeam || 'Home'}`,
             scheduledStartTime: new Date(match.time).toISOString(),
-            description:        buildDescription(match),
+            description:        match.streamDescription || buildDescription(match),
             privacy,
           }),
         });
         const data = await r.json();
         if (data.error) throw new Error(data.error);
         res.push({ match, ok: true, url: data.broadcastUrl });
-        onScheduled(match.id, data.broadcastUrl);
+        onScheduled(match.id, data.broadcastUrl, data.broadcastId);
       } catch (e) {
         res.push({ match, ok: false, error: e.message });
       }
@@ -317,9 +314,15 @@ function BulkScheduleModal({ matches, onClose, onScheduled }) {
 
 // ── Match row ─────────────────────────────────────────────────────────────────
 
-function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected, selectMode, selected, onToggleSelect }) {
+function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected, selectMode, selected, onToggleSelect, broadcastStatus, onTransition }) {
   const overlayUrl = `${BASE_URL}/overlay/${match.id}`;
   const today = isToday(match);
+  const bStatus = broadcastStatus?.status;
+  const bViewers = broadcastStatus?.concurrentViewers || 0;
+  const bTransitioning = broadcastStatus?.transitioning;
+
+  const STATUS_LABEL = { live: '● LIVE', testing: '● Preview', complete: 'Ended', ready: 'Scheduled', created: 'Scheduled' };
+  const STATUS_CLS   = { live: 'chip-status-live', testing: 'chip-status-testing', complete: 'chip-status-complete' };
 
   const handleDelete = () => {
     if (window.confirm(`Delete "${match.awayTeam} vs ${match.homeTeam}"?`)) {
@@ -351,17 +354,39 @@ function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected
           {match.gameId
             ? <span className="chip chip-id">#{match.gameId}</span>
             : <span className="chip chip-missing">No Game ID</span>}
+          {match.broadcastId && (
+            bStatus
+              ? <>
+                  <span className={`chip chip-status ${STATUS_CLS[bStatus] || ''}`}>
+                    {STATUS_LABEL[bStatus] || bStatus}
+                  </span>
+                  {bStatus === 'live' && bViewers > 0 && (
+                    <span className="chip chip-viewers">👁 {bViewers.toLocaleString()}</span>
+                  )}
+                </>
+              : <span className="chip chip-status">⟳ Checking…</span>
+          )}
         </div>
         <div className="match-actions">
           <Link to={`/match/${match.id}/edit`} className="btn btn-sm btn-outline">Edit</Link>
           <button className="btn btn-sm btn-outline" onClick={() => onDuplicate(match.id)}>Duplicate</button>
-          <button
-            className="btn btn-sm btn-outline"
-            onClick={() => onScheduleYouTube(match)}
-            title={ytConnected ? 'Schedule on YouTube' : 'Connect YouTube in settings first'}
-          >
-            ▶ YouTube
-          </button>
+          {match.broadcastId ? (
+            bTransitioning ? (
+              <button className="btn btn-sm btn-outline" disabled>⟳</button>
+            ) : bStatus === 'live' ? (
+              <button className="btn btn-sm btn-danger" onClick={() => onTransition(match.broadcastId, 'complete')}>⏹ End</button>
+            ) : ['created', 'ready', 'testing'].includes(bStatus) ? (
+              <button className="btn btn-sm btn-live" onClick={() => onTransition(match.broadcastId, 'live')}>● Go Live</button>
+            ) : null
+          ) : (
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={() => onScheduleYouTube(match)}
+              title={ytConnected ? 'Schedule on YouTube' : 'Connect YouTube in settings first'}
+            >
+              ▶ YouTube
+            </button>
+          )}
           <button className="btn btn-sm btn-danger" onClick={handleDelete}>Delete</button>
         </div>
       </div>
@@ -391,24 +416,49 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [matches, setMatches]           = useState([]);
   const [ytConnected, setYtConnected]   = useState(false);
-  const [schedulingMatch, setScheduling] = useState(null);
-  const [selectMode, setSelectMode]     = useState(false);
-  const [selectedIds, setSelectedIds]   = useState(new Set());
-  const [bulkModal, setBulkModal]       = useState(false);
+  const [schedulingMatch, setScheduling]     = useState(null);
+  const [selectMode, setSelectMode]          = useState(false);
+  const [selectedIds, setSelectedIds]        = useState(new Set());
+  const [bulkModal, setBulkModal]            = useState(false);
+  const [broadcastStatuses, setBroadcastStatuses] = useState({});
+  const [obsStatus, setObsStatus]   = useState(null);
+  const [obsLoading, setObsLoading] = useState(false);
 
-  const reload = useCallback(async () => {
+  const refresh = useCallback(async () => {
     const all = await getMatches();
-    setMatches(sortMatches(all));
+    const sorted = sortMatches(all);
+    setMatches(sorted);
+    const bids = sorted.filter(m => m.broadcastId).map(m => m.broadcastId);
+    if (!bids.length) return;
+    try {
+      const r = await fetch(`/api/youtube/broadcast-status?ids=${bids.join(',')}`);
+      if (r.ok) {
+        const d = await r.json();
+        setBroadcastStatuses(d.statuses || {});
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
-    migrateFromLocalStorage().then(n => { if (n > 0) reload(); });
-    reload();
+    migrateFromLocalStorage().then(n => { if (n > 0) refresh(); });
+    refresh();
     fetch('/api/youtube/status')
       .then(r => r.json())
       .then(d => setYtConnected(!!d.connected))
       .catch(() => {});
-  }, [reload]);
+    const interval = setInterval(refresh, 30_000);
+
+    const fetchObs = async () => {
+      try {
+        const r = await fetch('/api/obs/status');
+        if (r.ok) setObsStatus(await r.json());
+      } catch {}
+    };
+    fetchObs();
+    const obsInterval = setInterval(fetchObs, 5_000);
+
+    return () => { clearInterval(interval); clearInterval(obsInterval); };
+  }, [refresh]);
 
   const exitSelectMode = () => {
     setSelectMode(false);
@@ -418,12 +468,12 @@ export default function Dashboard() {
   const handleDelete = async (id) => {
     await deleteMatch(id);
     setSelectedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
-    reload();
+    refresh();
   };
 
   const handleDuplicate = async (id) => {
     await duplicateMatch(id);
-    reload();
+    refresh();
   };
 
   const handleScheduleYouTube = (match) => {
@@ -431,9 +481,54 @@ export default function Dashboard() {
     setScheduling(match);
   };
 
-  const handleScheduled = async (id, url) => {
-    await setMatchYouTubeUrl(id, url);
-    reload();
+  const handleScheduled = async (id, url, broadcastId) => {
+    await setMatchYouTubeUrl(id, url, broadcastId);
+    refresh();
+  };
+
+  const handleObsCommand = async (command) => {
+    setObsLoading(true);
+    try {
+      await fetch('/api/obs/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command }),
+      });
+    } catch {}
+    setObsLoading(false);
+  };
+
+  const handleTransition = async (broadcastId, newStatus) => {
+    setBroadcastStatuses(prev => ({
+      ...prev,
+      [broadcastId]: { ...prev[broadcastId], transitioning: true },
+    }));
+    try {
+      const r = await fetch('/api/youtube/transition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ broadcastId, status: newStatus }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        setBroadcastStatuses(prev => ({
+          ...prev,
+          [broadcastId]: { status: d.status, concurrentViewers: prev[broadcastId]?.concurrentViewers || 0 },
+        }));
+      } else {
+        alert(`Transition failed: ${d.error}`);
+        setBroadcastStatuses(prev => ({
+          ...prev,
+          [broadcastId]: { ...prev[broadcastId], transitioning: false },
+        }));
+      }
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+      setBroadcastStatuses(prev => ({
+        ...prev,
+        [broadcastId]: { ...prev[broadcastId], transitioning: false },
+      }));
+    }
   };
 
   const handleToggleSelect = (id) => {
@@ -463,6 +558,35 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {obsStatus && (
+        <div className={`obs-bar ${obsStatus.connected ? (obsStatus.streaming ? 'obs-bar-live' : 'obs-bar-connected') : 'obs-bar-offline'}`}>
+          <span className="obs-dot" />
+          <span className="obs-bar-label">OBS</span>
+          {obsStatus.connected ? (
+            <>
+              <span className="obs-bar-scene">{obsStatus.scene || '—'}</span>
+              <span className={`obs-bar-state ${obsStatus.streaming ? 'obs-state-live' : ''}`}>
+                {obsStatus.streaming ? '● Streaming' : obsStatus.recording ? '● Recording' : 'Idle'}
+              </span>
+            </>
+          ) : (
+            <span className="obs-bar-state">Not connected — open OBS with the script loaded</span>
+          )}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            {obsStatus.connected && !obsStatus.streaming && (
+              <button className="btn btn-sm btn-live" disabled={obsLoading} onClick={() => handleObsCommand('start_streaming')}>
+                ▶ Start Stream
+              </button>
+            )}
+            {obsStatus.connected && obsStatus.streaming && (
+              <button className="btn btn-sm btn-danger" disabled={obsLoading} onClick={() => handleObsCommand('stop_streaming')}>
+                ⏹ Stop Stream
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {matches.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">⚾</div>
@@ -483,6 +607,8 @@ export default function Dashboard() {
               selectMode={selectMode}
               selected={selectedIds.has(m.id)}
               onToggleSelect={handleToggleSelect}
+              broadcastStatus={m.broadcastId ? (broadcastStatuses[m.broadcastId] || null) : null}
+              onTransition={handleTransition}
             />
           ))}
         </div>
@@ -533,7 +659,7 @@ export default function Dashboard() {
       {bulkModal && (
         <BulkScheduleModal
           matches={selectedMatches}
-          onClose={() => { setBulkModal(false); exitSelectMode(); reload(); }}
+          onClose={() => { setBulkModal(false); exitSelectMode(); refresh(); }}
           onScheduled={handleScheduled}
         />
       )}

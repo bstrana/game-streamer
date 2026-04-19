@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { getMatch, createMatch, updateMatch } from '../stores/matchStore';
@@ -10,6 +10,7 @@ const EMPTY_FORM = {
   location: '',
   competition: '',
   gameId: '',
+  streamDescription: '',
   awayPrimaryColor: '#c0392b',
   awaySecondaryColor: '#7b241c',
   awayLogoUrl: '',
@@ -24,7 +25,6 @@ function toDatetimeLocal(iso) {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    // format as YYYY-MM-DDTHH:MM for datetime-local input
     const pad = (n) => String(n).padStart(2, '0');
     return (
       `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
@@ -35,6 +35,18 @@ function toDatetimeLocal(iso) {
   }
 }
 
+function buildAutoDescription({ competition, time, location }) {
+  const lines = [];
+  if (competition) lines.push(`Competition: ${competition}`);
+  if (time) {
+    try {
+      lines.push(`Date: ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(time))}`);
+    } catch { lines.push(`Date: ${time}`); }
+  }
+  if (location) lines.push(`Location: ${location}`);
+  return lines.join('\n');
+}
+
 export default function MatchEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -43,11 +55,13 @@ export default function MatchEdit() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const broadcastIdRef = useRef('');
 
   useEffect(() => {
     if (!isNew) {
       getMatch(id).then(match => {
         if (!match) { navigate('/'); return; }
+        broadcastIdRef.current = match.broadcastId || '';
         setForm({
           awayTeam: match.awayTeam,
           homeTeam: match.homeTeam,
@@ -55,6 +69,7 @@ export default function MatchEdit() {
           location: match.location,
           competition: match.competition,
           gameId: match.gameId,
+          streamDescription: match.streamDescription || buildAutoDescription(match),
           awayPrimaryColor: match.awayPrimaryColor || match.primaryColor || '#c0392b',
           awaySecondaryColor: match.awaySecondaryColor || '#7b241c',
           awayLogoUrl: match.awayLogoUrl || '',
@@ -111,6 +126,18 @@ export default function MatchEdit() {
       await createMatch(data);
     } else {
       await updateMatch(id, data);
+      if (broadcastIdRef.current) {
+        fetch('/api/youtube/update-broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            broadcastId: broadcastIdRef.current,
+            title: `${data.awayTeam} vs ${data.homeTeam}`,
+            description: data.streamDescription || '',
+            ...(data.time ? { scheduledStartTime: data.time } : {}),
+          }),
+        }).catch(() => {});
+      }
     }
     navigate('/');
   };
@@ -239,6 +266,23 @@ export default function MatchEdit() {
                 scheduled match info on the overlay.
               </p>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="streamDescription" className="form-label">
+              Stream Description
+              <span className="label-hint">(pre-fills the YouTube schedule description)</span>
+            </label>
+            <textarea
+              id="streamDescription"
+              name="streamDescription"
+              className="form-input"
+              rows={4}
+              style={{ resize: 'vertical' }}
+              placeholder="Optional description shown on the YouTube broadcast…"
+              value={form.streamDescription}
+              onChange={handleChange}
+            />
           </div>
 
           <div className="form-group">

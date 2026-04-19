@@ -38,6 +38,8 @@ DATA_DIR      = os.environ.get('APP_DATA', '/app/data')
 SETTINGS_DIR  = os.path.join(DATA_DIR, 'game-settings')
 MATCHES_FILE  = os.path.join(DATA_DIR, 'matches.json')
 TOKENS_FILE   = os.path.join(DATA_DIR, 'youtube-tokens.json')
+OBS_STATUS_FILE  = os.path.join(DATA_DIR, 'obs-status.json')
+OBS_COMMAND_FILE = os.path.join(DATA_DIR, 'obs-command.json')
 os.makedirs(SETTINGS_DIR, exist_ok=True)
 
 GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID', '')
@@ -55,10 +57,12 @@ MATCH_STR_LIMITS = {
     'awayTeam': 120, 'homeTeam': 120,
     'location': 256, 'competition': 200,
     'gameId': 20,
+    'streamDescription': 5000,
     'awayLogoUrl': 2048, 'homeLogoUrl': 2048,
     'awayPrimaryColor': 7, 'awaySecondaryColor': 7,
     'homePrimaryColor': 7, 'homeSecondaryColor': 7,
     'youtubeUrl': 2048, 'streamUrl': 2048,
+    'broadcastId': 64,
 }
 COLOR_FIELDS = {'awayPrimaryColor', 'awaySecondaryColor', 'homePrimaryColor', 'homeSecondaryColor'}
 
@@ -131,6 +135,49 @@ def _sync_game_settings(match):
     path = os.path.join(SETTINGS_DIR, f'{game_id}.json')
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(payload, f)
+
+
+# ── OBS helpers ───────────────────────────────────────────────────────────────
+
+def _load_obs_status():
+    if not os.path.exists(OBS_STATUS_FILE):
+        return {}
+    try:
+        with open(OBS_STATUS_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_obs_status(data):
+    tmp = OBS_STATUS_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    os.replace(tmp, OBS_STATUS_FILE)
+
+def _load_obs_command():
+    if not os.path.exists(OBS_COMMAND_FILE):
+        return {}
+    try:
+        with open(OBS_COMMAND_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_obs_command(data):
+    tmp = OBS_COMMAND_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    os.replace(tmp, OBS_COMMAND_FILE)
+
+def _obs_connected(status):
+    updated = status.get('updatedAt')
+    if not updated:
+        return False
+    try:
+        dt = datetime.fromisoformat(updated.replace('Z', '+00:00'))
+        return (datetime.now(timezone.utc) - dt).total_seconds() < 15
+    except Exception:
+        return False
 
 
 # ── YouTube helpers ───────────────────────────────────────────────────────────
@@ -242,13 +289,17 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_get()
+        elif self.path == '/api/obs/status':
+            self._obs_get()
         elif self.path.startswith('/api/matches'):
             self._matches_get()
         else:
             self._settings_get()
 
     def do_PUT(self):
-        if self.path.startswith('/api/matches/'):
+        if self.path == '/api/obs/status':
+            self._obs_put()
+        elif self.path.startswith('/api/matches/'):
             self._matches_put()
         else:
             self._settings_put()
@@ -256,6 +307,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_post()
+        elif self.path == '/api/obs/command':
+            self._obs_command_post()
         elif self.path.startswith('/api/matches'):
             self._matches_post()
         else:
@@ -359,6 +412,58 @@ class Handler(BaseHTTPRequestHandler):
         _save_matches(new_matches)
         self._json(200, {'ok': True})
 
+    # ── OBS status & commands ─────────────────────────────────────────────────
+
+    def _obs_get(self):
+        status = _load_obs_status()
+        command = _load_obs_command()
+        self._json(200, {
+            'connected':      _obs_connected(status),
+            'streaming':      status.get('streaming', False),
+            'recording':      status.get('recording', False),
+            'scene':          status.get('scene', ''),
+            'updatedAt':      status.get('updatedAt'),
+            'pendingCommand': command if command.get('id') else None,
+        })
+
+    def _obs_put(self):
+        try:
+            body = json.loads(self._body())
+            status = {
+                'streaming': bool(body.get('streaming', False)),
+                'recording': bool(body.get('recording', False)),
+                'scene':     str(body.get('scene', ''))[:200],
+                'updatedAt': _now_iso(),
+            }
+            _save_obs_status(status)
+            ack_id = body.get('ackCommandId', '')
+            command = _load_obs_command()
+            if ack_id and command.get('id') == ack_id:
+                _save_obs_command({})
+                command = {}
+            self._json(200, {'ok': True, 'pendingCommand': command if command.get('id') else None})
+        except (json.JSONDecodeError, ValueError) as exc:
+            self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('obs_put')
+            self._json(500, {'error': 'Internal server error'})
+
+    def _obs_command_post(self):
+        try:
+            body = json.loads(self._body())
+            command = body.get('command', '')
+            if command not in ('start_streaming', 'stop_streaming'):
+                self._json(400, {'error': 'command must be start_streaming or stop_streaming'})
+                return
+            cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
+            _save_obs_command(cmd)
+            self._json(200, {'ok': True, 'commandId': cmd['id']})
+        except (json.JSONDecodeError, ValueError) as exc:
+            self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('obs_command_post')
+            self._json(500, {'error': 'Internal server error'})
+
     # ── Game-settings ─────────────────────────────────────────────────────
 
     def _settings_get(self):
@@ -423,6 +528,42 @@ class Handler(BaseHTTPRequestHandler):
                 'prompt':        'consent',
             })
             self._json(200, {'url': f'{GOOGLE_AUTH_URL}?{params}'})
+
+        elif self.path.startswith('/api/youtube/broadcast-status'):
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            ids_str = params.get('ids', [''])[0]
+            if not ids_str:
+                self._json(400, {'error': 'ids param required'})
+                return
+            token = _get_access_token()
+            if not token:
+                self._json(401, {'error': 'YouTube not connected'})
+                return
+            try:
+                raw_ids = [i.strip() for i in ids_str.split(',') if i.strip()][:50]
+                safe_ids = [i for i in raw_ids if re.match(r'^[A-Za-z0-9_\-]{1,64}$', i)]
+                if not safe_ids:
+                    self._json(400, {'error': 'No valid ids'})
+                    return
+                id_param = urllib.parse.quote(','.join(safe_ids))
+                data = _yt(
+                    f'/liveBroadcasts?part=status,statistics&id={id_param}',
+                    token=token,
+                )
+                statuses = {}
+                for item in data.get('items', []):
+                    bid = item['id']
+                    statuses[bid] = {
+                        'status': item.get('status', {}).get('lifeCycleStatus', 'unknown'),
+                        'concurrentViewers': int(item.get('statistics', {}).get('concurrentViewers') or 0),
+                    }
+                self._json(200, {'statuses': statuses})
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('broadcast-status')
+                self._json(500, {'error': 'Internal server error'})
 
         else:
             self._json(404, {'error': 'not found'})
@@ -536,6 +677,78 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(exc.code, {'error': err_body})
             except Exception as exc:
                 self._json(500, {'error': str(exc)})
+
+        elif self.path == '/api/youtube/transition':
+            try:
+                body = json.loads(self._body())
+                broadcast_id = body.get('broadcastId', '').strip()
+                status = body.get('status', '')
+                if not broadcast_id or not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                    self._json(400, {'error': 'Invalid broadcastId'})
+                    return
+                if status not in ('testing', 'live', 'complete'):
+                    self._json(400, {'error': 'status must be testing, live, or complete'})
+                    return
+                token = _get_access_token()
+                if not token:
+                    self._json(401, {'error': 'YouTube not connected'})
+                    return
+                result = _yt(
+                    f'/liveBroadcasts/transition?broadcastStatus={status}'
+                    f'&id={urllib.parse.quote(broadcast_id)}&part=id,status',
+                    method='POST', body=b'', token=token,
+                )
+                self._json(200, {
+                    'ok': True,
+                    'status': result.get('status', {}).get('lifeCycleStatus', 'unknown'),
+                })
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('transition')
+                self._json(500, {'error': 'Internal server error'})
+
+        elif self.path == '/api/youtube/update-broadcast':
+            try:
+                body = json.loads(self._body())
+                broadcast_id = body.get('broadcastId', '').strip()
+                if not broadcast_id or not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                    self._json(400, {'error': 'Invalid broadcastId'})
+                    return
+                token = _get_access_token()
+                if not token:
+                    self._json(401, {'error': 'YouTube not connected'})
+                    return
+                existing = _yt(
+                    f'/liveBroadcasts?part=snippet,status&id={urllib.parse.quote(broadcast_id)}',
+                    token=token,
+                )
+                items = existing.get('items', [])
+                if not items:
+                    self._json(404, {'error': 'Broadcast not found'})
+                    return
+                snippet = dict(items[0].get('snippet', {}))
+                status_obj = dict(items[0].get('status', {}))
+                if 'title' in body:
+                    snippet['title'] = str(body['title'])[:100]
+                if 'description' in body:
+                    snippet['description'] = str(body['description'])[:5000]
+                if 'scheduledStartTime' in body:
+                    snippet['scheduledStartTime'] = body['scheduledStartTime']
+                if body.get('privacy') in ('public', 'private', 'unlisted'):
+                    status_obj['privacyStatus'] = body['privacy']
+                update_body = json.dumps({
+                    'id': broadcast_id,
+                    'snippet': snippet,
+                    'status': status_obj,
+                }).encode()
+                _yt('/liveBroadcasts?part=snippet,status', method='PUT', body=update_body, token=token)
+                self._json(200, {'ok': True})
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('update-broadcast')
+                self._json(500, {'error': 'Internal server error'})
 
         else:
             self._json(404, {'error': 'not found'})
