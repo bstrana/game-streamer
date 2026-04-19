@@ -5,6 +5,8 @@ export default function YouTubeSettings() {
   const [status, setStatus]   = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const [obsSecret, setObsSecret]   = useState('');
+  const [obsCopied, setObsCopied]   = useState(false);
 
   const fetchStatus = async () => {
     try {
@@ -16,7 +18,20 @@ export default function YouTubeSettings() {
     }
   };
 
-  useEffect(() => { fetchStatus(); }, []);
+  useEffect(() => {
+    fetchStatus();
+    fetch('/api/obs/secret')
+      .then(r => r.json())
+      .then(d => setObsSecret(d.secret || ''))
+      .catch(() => {});
+  }, []);
+
+  const copyObsSecret = () => {
+    navigator.clipboard.writeText(obsSecret).then(() => {
+      setObsCopied(true);
+      setTimeout(() => setObsCopied(false), 2000);
+    });
+  };
 
   const handleConnect = async () => {
     setLoading(true);
@@ -92,6 +107,36 @@ export default function YouTubeSettings() {
         {error && (
           <p style={{ color: 'var(--danger)', marginTop: 16, fontSize: 13 }}>{error}</p>
         )}
+      </div>
+
+      <div className="form-card" style={{ maxWidth: 560, marginTop: 24 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>OBS Script Setup</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
+          Copy this secret into the <strong>API Secret</strong> field of the OBS Lua script
+          (Scripts panel → Game Streamer). The script uses it to authenticate its heartbeat
+          and receive stream commands.
+        </p>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <code style={{
+            flex: 1, background: 'var(--bg)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)', padding: '8px 12px', fontSize: 13,
+            fontFamily: 'var(--mono)', wordBreak: 'break-all',
+          }}>
+            {obsSecret || '—'}
+          </code>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={copyObsSecret}
+            disabled={!obsSecret}
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            {obsCopied ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+        <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 10, lineHeight: 1.5 }}>
+          This secret is auto-generated and stored on the server. Restarting the app will
+          keep the same secret. If compromised, delete <code>/app/data/obs-secret.txt</code> and restart.
+        </p>
       </div>
     </Layout>
   );

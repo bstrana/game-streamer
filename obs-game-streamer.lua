@@ -33,14 +33,23 @@ local current_settings = nil
 local last_ack_id    = ""
 local poll_running   = false   -- guard against overlapping polls
 
--- Platform-safe temp file for PUT request body
+-- Platform-safe temp file for PUT request body (unique per call to avoid races)
 local IS_WIN = package.config:sub(1, 1) == "\\"
-local function tmp_path()
+local _gs_call_seq = 0
+local function tmp_path_unique()
+  _gs_call_seq = _gs_call_seq + 1
   local t = os.getenv("TEMP") or os.getenv("TMPDIR") or "/tmp"
   t = t:gsub("[/\\]+$", "")
-  return t .. (IS_WIN and "\\" or "/") .. "gs_obs_body.json"
+  return t .. (IS_WIN and "\\" or "/") ..
+    string.format("gs_obs_%d_%d.json", os.time(), _gs_call_seq)
 end
-local TMP_FILE = tmp_path()
+
+-- Validate that a URL is safe to use in a shell command (no metacharacters)
+local function is_safe_url(url)
+  if type(url) ~= "string" or #url < 8 or #url > 512 then return false end
+  -- Allow only URL-safe characters; block ; ` $ | > < & ( ) \ " ' newlines etc.
+  return url:match("^https?://[%w%.%-%_:/%?=&#@%%]+$") ~= nil
+end
 
 -- ── Windows silent-process launcher (avoids CMD flash) ────────────────────────
 -- On Windows, io.popen spawns cmd.exe which creates a visible console window.
@@ -162,6 +171,14 @@ local function fetch_game_settings()
     obs.script_log(obs.LOG_WARNING, "Game Streamer: enter a Game ID before fetching.")
     return
   end
+  if not game_id:match("^%d+$") then
+    obs.script_log(obs.LOG_WARNING, "Game Streamer: Game ID must be numeric.")
+    return
+  end
+  if not is_safe_url(base) then
+    obs.script_log(obs.LOG_WARNING, "Game Streamer: App URL contains unsafe characters.")
+    return
+  end
 
   local url  = base .. "/api/game-settings/" .. game_id
   local resp = run_curl(string.format('curl -s --max-time 8 "%s"', url))
@@ -264,16 +281,24 @@ end
 
 -- ── Streaming control (polls app server every 3 s) ───────────────────────────
 
--- Write body to temp file and PUT it; returns response string or nil
-local function http_put_json(url, body)
-  local f = io.open(TMP_FILE, "w")
+-- Write body to a unique temp file, PUT it with optional Bearer auth, then delete the file.
+local function http_put_json(url, body, secret)
+  local tmp = tmp_path_unique()
+  local f = io.open(tmp, "w")
   if not f then return nil end
   f:write(body)
   f:close()
-  return run_curl(string.format(
-    'curl -s --max-time 2 -X PUT -H "Content-Type: application/json" --data-binary "@%s" "%s"',
-    TMP_FILE, url
+  local auth_hdr = ""
+  if secret and secret ~= "" then
+    -- secret is a UUID (hex + hyphens only) so safe to interpolate
+    auth_hdr = ' -H "Authorization: Bearer ' .. secret .. '"'
+  end
+  local result = run_curl(string.format(
+    'curl -s --max-time 2 -X PUT -H "Content-Type: application/json"%s --data-binary "@%s" "%s"',
+    auth_hdr, tmp, url
   ))
+  os.remove(tmp)
+  return result
 end
 
 -- Execute a command received from the app server
@@ -309,7 +334,9 @@ local function poll_streaming_control()
   if poll_running or not current_settings then return end
   local base = obs.obs_data_get_string(current_settings, "app_url"):gsub("/+$", "")
   if base == "" or base:find("example%.com") then return end
+  if not is_safe_url(base) then return end
 
+  local secret = obs.obs_data_get_string(current_settings, "api_secret")
   poll_running = true
 
   -- Build status JSON
@@ -331,7 +358,7 @@ local function poll_streaming_control()
   )
   last_ack_id = ""
 
-  local resp = http_put_json(base .. "/api/obs/status", body)
+  local resp = http_put_json(base .. "/api/obs/status", body, secret)
   poll_running = false
 
   if not resp or resp == "" then return end
@@ -361,8 +388,9 @@ end
 function script_properties()
   local props = obs.obs_properties_create()
 
-  obs.obs_properties_add_text(props, "app_url",  "App URL",  obs.OBS_TEXT_DEFAULT)
-  obs.obs_properties_add_text(props, "game_id",  "Game ID",  obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "app_url",    "App URL",    obs.OBS_TEXT_DEFAULT)
+  obs.obs_properties_add_text(props, "api_secret", "API Secret", obs.OBS_TEXT_PASSWORD)
+  obs.obs_properties_add_text(props, "game_id",    "Game ID",    obs.OBS_TEXT_DEFAULT)
 
   obs.obs_properties_add_button(props, "btn_fetch", "↓  Fetch Settings from App",
     function(_, _)
@@ -393,6 +421,7 @@ end
 
 function script_defaults(settings)
   obs.obs_data_set_default_string(settings, "app_url",     "https://gamestreamer.example.com")
+  obs.obs_data_set_default_string(settings, "api_secret",  "")
   obs.obs_data_set_default_string(settings, "game_id",     "")
   obs.obs_data_set_default_string(settings, "away",        "Away")
   obs.obs_data_set_default_string(settings, "home",        "Home")

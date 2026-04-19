@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { getMatches, deleteMatch, duplicateMatch, setMatchYouTubeUrl, migrateFromLocalStorage } from '../stores/matchStore';
@@ -433,20 +433,31 @@ export default function Dashboard() {
   const [broadcastStatuses, setBroadcastStatuses] = useState({});
   const [obsStatus, setObsStatus]   = useState(null);
   const [obsLoading, setObsLoading] = useState(false);
+  const obsSecretRef  = useRef('');
+  const obsAbortRef   = useRef(null);
+  const refreshingRef = useRef(false);
+
+  const BROADCAST_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
   const refresh = useCallback(async () => {
-    const all = await getMatches();
-    const sorted = sortMatches(all);
-    setMatches(sorted);
-    const bids = sorted.filter(m => m.broadcastId).map(m => m.broadcastId);
-    if (!bids.length) return;
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
     try {
+      const all = await getMatches();
+      const sorted = sortMatches(all);
+      setMatches(sorted);
+      const bids = sorted
+        .filter(m => m.broadcastId && BROADCAST_ID_RE.test(m.broadcastId))
+        .map(m => m.broadcastId);
+      if (!bids.length) return;
       const r = await fetch(`/api/youtube/broadcast-status?ids=${bids.join(',')}`);
       if (r.ok) {
         const d = await r.json();
         setBroadcastStatuses(d.statuses || {});
       }
-    } catch {}
+    } catch {} finally {
+      refreshingRef.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -456,18 +467,30 @@ export default function Dashboard() {
       .then(r => r.json())
       .then(d => setYtConnected(!!d.connected))
       .catch(() => {});
+    fetch('/api/obs/secret')
+      .then(r => r.json())
+      .then(d => { obsSecretRef.current = d.secret || ''; })
+      .catch(() => {});
     const interval = setInterval(refresh, 30_000);
 
     const fetchObs = async () => {
+      if (obsAbortRef.current) obsAbortRef.current.abort();
+      obsAbortRef.current = new AbortController();
       try {
-        const r = await fetch('/api/obs/status');
+        const r = await fetch('/api/obs/status', { signal: obsAbortRef.current.signal });
         if (r.ok) setObsStatus(await r.json());
-      } catch {}
+      } catch (e) {
+        if (e.name !== 'AbortError') { /* network error, ignore */ }
+      }
     };
     fetchObs();
     const obsInterval = setInterval(fetchObs, 5_000);
 
-    return () => { clearInterval(interval); clearInterval(obsInterval); };
+    return () => {
+      clearInterval(interval);
+      clearInterval(obsInterval);
+      if (obsAbortRef.current) obsAbortRef.current.abort();
+    };
   }, [refresh]);
 
   const exitSelectMode = () => {
@@ -499,9 +522,11 @@ export default function Dashboard() {
   const handleObsCommand = async (command, broadcastId) => {
     setObsLoading(true);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (obsSecretRef.current) headers['Authorization'] = `Bearer ${obsSecretRef.current}`;
       await fetch('/api/obs/command', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ command, ...(broadcastId ? { broadcastId } : {}) }),
       });
     } catch {}
