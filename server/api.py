@@ -38,6 +38,8 @@ DATA_DIR      = os.environ.get('APP_DATA', '/app/data')
 SETTINGS_DIR  = os.path.join(DATA_DIR, 'game-settings')
 MATCHES_FILE  = os.path.join(DATA_DIR, 'matches.json')
 TOKENS_FILE   = os.path.join(DATA_DIR, 'youtube-tokens.json')
+OBS_STATUS_FILE  = os.path.join(DATA_DIR, 'obs-status.json')
+OBS_COMMAND_FILE = os.path.join(DATA_DIR, 'obs-command.json')
 os.makedirs(SETTINGS_DIR, exist_ok=True)
 
 GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID', '')
@@ -133,6 +135,49 @@ def _sync_game_settings(match):
     path = os.path.join(SETTINGS_DIR, f'{game_id}.json')
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(payload, f)
+
+
+# ── OBS helpers ───────────────────────────────────────────────────────────────
+
+def _load_obs_status():
+    if not os.path.exists(OBS_STATUS_FILE):
+        return {}
+    try:
+        with open(OBS_STATUS_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_obs_status(data):
+    tmp = OBS_STATUS_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    os.replace(tmp, OBS_STATUS_FILE)
+
+def _load_obs_command():
+    if not os.path.exists(OBS_COMMAND_FILE):
+        return {}
+    try:
+        with open(OBS_COMMAND_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_obs_command(data):
+    tmp = OBS_COMMAND_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    os.replace(tmp, OBS_COMMAND_FILE)
+
+def _obs_connected(status):
+    updated = status.get('updatedAt')
+    if not updated:
+        return False
+    try:
+        dt = datetime.fromisoformat(updated.replace('Z', '+00:00'))
+        return (datetime.now(timezone.utc) - dt).total_seconds() < 15
+    except Exception:
+        return False
 
 
 # ── YouTube helpers ───────────────────────────────────────────────────────────
@@ -244,13 +289,17 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_get()
+        elif self.path == '/api/obs/status':
+            self._obs_get()
         elif self.path.startswith('/api/matches'):
             self._matches_get()
         else:
             self._settings_get()
 
     def do_PUT(self):
-        if self.path.startswith('/api/matches/'):
+        if self.path == '/api/obs/status':
+            self._obs_put()
+        elif self.path.startswith('/api/matches/'):
             self._matches_put()
         else:
             self._settings_put()
@@ -258,6 +307,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_post()
+        elif self.path == '/api/obs/command':
+            self._obs_command_post()
         elif self.path.startswith('/api/matches'):
             self._matches_post()
         else:
@@ -360,6 +411,58 @@ class Handler(BaseHTTPRequestHandler):
             return
         _save_matches(new_matches)
         self._json(200, {'ok': True})
+
+    # ── OBS status & commands ─────────────────────────────────────────────────
+
+    def _obs_get(self):
+        status = _load_obs_status()
+        command = _load_obs_command()
+        self._json(200, {
+            'connected':      _obs_connected(status),
+            'streaming':      status.get('streaming', False),
+            'recording':      status.get('recording', False),
+            'scene':          status.get('scene', ''),
+            'updatedAt':      status.get('updatedAt'),
+            'pendingCommand': command if command.get('id') else None,
+        })
+
+    def _obs_put(self):
+        try:
+            body = json.loads(self._body())
+            status = {
+                'streaming': bool(body.get('streaming', False)),
+                'recording': bool(body.get('recording', False)),
+                'scene':     str(body.get('scene', ''))[:200],
+                'updatedAt': _now_iso(),
+            }
+            _save_obs_status(status)
+            ack_id = body.get('ackCommandId', '')
+            command = _load_obs_command()
+            if ack_id and command.get('id') == ack_id:
+                _save_obs_command({})
+                command = {}
+            self._json(200, {'ok': True, 'pendingCommand': command if command.get('id') else None})
+        except (json.JSONDecodeError, ValueError) as exc:
+            self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('obs_put')
+            self._json(500, {'error': 'Internal server error'})
+
+    def _obs_command_post(self):
+        try:
+            body = json.loads(self._body())
+            command = body.get('command', '')
+            if command not in ('start_streaming', 'stop_streaming'):
+                self._json(400, {'error': 'command must be start_streaming or stop_streaming'})
+                return
+            cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
+            _save_obs_command(cmd)
+            self._json(200, {'ok': True, 'commandId': cmd['id']})
+        except (json.JSONDecodeError, ValueError) as exc:
+            self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('obs_command_post')
+            self._json(500, {'error': 'Internal server error'})
 
     # ── Game-settings ─────────────────────────────────────────────────────
 

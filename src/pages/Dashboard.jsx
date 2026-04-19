@@ -421,6 +421,8 @@ export default function Dashboard() {
   const [selectedIds, setSelectedIds]        = useState(new Set());
   const [bulkModal, setBulkModal]            = useState(false);
   const [broadcastStatuses, setBroadcastStatuses] = useState({});
+  const [obsStatus, setObsStatus]   = useState(null);
+  const [obsLoading, setObsLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     const all = await getMatches();
@@ -445,7 +447,17 @@ export default function Dashboard() {
       .then(d => setYtConnected(!!d.connected))
       .catch(() => {});
     const interval = setInterval(refresh, 30_000);
-    return () => clearInterval(interval);
+
+    const fetchObs = async () => {
+      try {
+        const r = await fetch('/api/obs/status');
+        if (r.ok) setObsStatus(await r.json());
+      } catch {}
+    };
+    fetchObs();
+    const obsInterval = setInterval(fetchObs, 5_000);
+
+    return () => { clearInterval(interval); clearInterval(obsInterval); };
   }, [refresh]);
 
   const exitSelectMode = () => {
@@ -472,6 +484,18 @@ export default function Dashboard() {
   const handleScheduled = async (id, url, broadcastId) => {
     await setMatchYouTubeUrl(id, url, broadcastId);
     refresh();
+  };
+
+  const handleObsCommand = async (command) => {
+    setObsLoading(true);
+    try {
+      await fetch('/api/obs/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command }),
+      });
+    } catch {}
+    setObsLoading(false);
   };
 
   const handleTransition = async (broadcastId, newStatus) => {
@@ -533,6 +557,35 @@ export default function Dashboard() {
           <Link to="/match/new" className="btn btn-primary">+ New Match</Link>
         </div>
       </div>
+
+      {obsStatus && (
+        <div className={`obs-bar ${obsStatus.connected ? (obsStatus.streaming ? 'obs-bar-live' : 'obs-bar-connected') : 'obs-bar-offline'}`}>
+          <span className="obs-dot" />
+          <span className="obs-bar-label">OBS</span>
+          {obsStatus.connected ? (
+            <>
+              <span className="obs-bar-scene">{obsStatus.scene || '—'}</span>
+              <span className={`obs-bar-state ${obsStatus.streaming ? 'obs-state-live' : ''}`}>
+                {obsStatus.streaming ? '● Streaming' : obsStatus.recording ? '● Recording' : 'Idle'}
+              </span>
+            </>
+          ) : (
+            <span className="obs-bar-state">Not connected — open OBS with the script loaded</span>
+          )}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            {obsStatus.connected && !obsStatus.streaming && (
+              <button className="btn btn-sm btn-live" disabled={obsLoading} onClick={() => handleObsCommand('start_streaming')}>
+                ▶ Start Stream
+              </button>
+            )}
+            {obsStatus.connected && obsStatus.streaming && (
+              <button className="btn btn-sm btn-danger" disabled={obsLoading} onClick={() => handleObsCommand('stop_streaming')}>
+                ⏹ Stop Stream
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {matches.length === 0 ? (
         <div className="empty-state">

@@ -29,6 +29,19 @@ local bit = require("bit")
 -- Current settings reference — updated by script_update / script_load
 local current_settings = nil
 
+-- Streaming control state
+local last_ack_id    = ""
+local poll_running   = false   -- guard against overlapping polls
+
+-- Platform-safe temp file for PUT request body
+local function tmp_path()
+  local t = os.getenv("TEMP") or os.getenv("TMPDIR") or "/tmp"
+  -- Normalize Windows backslashes, append filename
+  t = t:gsub("\\$", ""):gsub("/+$", "")
+  return t .. (package.config:sub(1,1) == "\\" and "\\" or "/") .. "gs_obs_body.json"
+end
+local TMP_FILE = tmp_path()
+
 -- ── Helpers ───────────────────────────────────────────────────────────────────
 -- OBS stores colours as ARGB: bits 24-31 = alpha, 16-23 = red, 8-15 = green, 0-7 = blue.
 -- Uses LuaJIT bit library (Lua 5.1 — OBS does not support Lua 5.3 bitwise ops).
@@ -181,6 +194,80 @@ local function add_or_update_source()
   obs.obs_data_release(browser_settings)
 end
 
+-- ── Streaming control (polls app server every 3 s) ───────────────────────────
+
+-- Write body to temp file and PUT it; returns response string or nil
+local function http_put_json(url, body)
+  local f = io.open(TMP_FILE, "w")
+  if not f then return nil end
+  f:write(body)
+  f:close()
+  local cmd = string.format(
+    'curl -s --max-time 2 -X PUT -H "Content-Type: application/json" --data-binary "@%s" "%s"',
+    TMP_FILE, url
+  )
+  local handle = io.popen(cmd)
+  local resp   = handle and handle:read("*a") or nil
+  if handle then handle:close() end
+  return resp
+end
+
+-- Execute a command received from the app server
+local function execute_command(command)
+  if command == "start_streaming" then
+    if not obs.obs_frontend_streaming_active() then
+      obs.obs_frontend_start_streaming()
+      obs.script_log(obs.LOG_INFO, "Game Streamer: started streaming via remote command")
+    end
+  elseif command == "stop_streaming" then
+    if obs.obs_frontend_streaming_active() then
+      obs.obs_frontend_stop_streaming()
+      obs.script_log(obs.LOG_INFO, "Game Streamer: stopped streaming via remote command")
+    end
+  end
+end
+
+-- Timer callback — reports current OBS state and picks up pending commands
+local function poll_streaming_control()
+  if poll_running or not current_settings then return end
+  local base = obs.obs_data_get_string(current_settings, "app_url"):gsub("/+$", "")
+  if base == "" or base:find("example%.com") then return end
+
+  poll_running = true
+
+  -- Build status JSON
+  local streaming = obs.obs_frontend_streaming_active()
+  local recording = obs.obs_frontend_recording_active()
+  local scene_src = obs.obs_frontend_get_current_scene()
+  local scene = ""
+  if scene_src then
+    scene = (obs.obs_source_get_name(scene_src) or ""):gsub('\\', '\\\\'):gsub('"', '\\"')
+    obs.obs_source_release(scene_src)
+  end
+
+  local body = string.format(
+    '{"streaming":%s,"recording":%s,"scene":"%s"%s}',
+    streaming and "true" or "false",
+    recording and "true" or "false",
+    scene,
+    last_ack_id ~= "" and (',"ackCommandId":"' .. last_ack_id .. '"') or ""
+  )
+  last_ack_id = ""
+
+  local resp = http_put_json(base .. "/api/obs/status", body)
+  poll_running = false
+
+  if not resp or resp == "" then return end
+
+  -- Parse pendingCommand from response (minimal JSON extraction)
+  local cmd_id   = resp:match('"id"%s*:%s*"([^"]+)"')
+  local cmd_name = resp:match('"command"%s*:%s*"([^"]+)"')
+  if cmd_id and cmd_name and cmd_id ~= "" then
+    execute_command(cmd_name)
+    last_ack_id = cmd_id
+  end
+end
+
 -- ── OBS script callbacks ──────────────────────────────────────────────────────
 function script_description()
   return [[<h3>Game Streamer Scoreboard</h3>
@@ -248,11 +335,16 @@ end
 
 function script_load(settings)
   current_settings = settings
-  -- Defer menu registration until OBS has finished building its frontend.
   obs.obs_frontend_add_event_callback(function(event)
     if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING then
       obs.obs_frontend_add_tools_menu_item(
         "Game Streamer: Update Scoreboard", add_or_update_source)
     end
   end)
+  -- Start streaming-control heartbeat (reports status + picks up commands)
+  obs.timer_add(poll_streaming_control, 3000)
+end
+
+function script_unload()
+  obs.timer_remove(poll_streaming_control)
 end
