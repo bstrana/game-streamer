@@ -277,9 +277,22 @@ local function http_put_json(url, body)
 end
 
 -- Execute a command received from the app server
-local function execute_command(command)
+local function execute_command(command, broadcast_id)
   if command == "start_streaming" then
     if not obs.obs_frontend_streaming_active() then
+      if broadcast_id and broadcast_id ~= "" then
+        local service = obs.obs_frontend_get_streaming_service()
+        if service then
+          local sdata = obs.obs_service_get_settings(service)
+          if sdata then
+            obs.obs_data_set_string(sdata, "broadcast_id", broadcast_id)
+            obs.obs_service_update(service, sdata)
+            obs.obs_frontend_save_streaming_service()
+            obs.obs_data_release(sdata)
+          end
+          obs.obs_service_release(service)
+        end
+      end
       obs.obs_frontend_start_streaming()
       obs.script_log(obs.LOG_INFO, "Game Streamer: started streaming via remote command")
     end
@@ -326,8 +339,9 @@ local function poll_streaming_control()
   -- Parse pendingCommand from response (minimal JSON extraction)
   local cmd_id   = resp:match('"id"%s*:%s*"([^"]+)"')
   local cmd_name = resp:match('"command"%s*:%s*"([^"]+)"')
+  local cmd_bid  = resp:match('"broadcastId"%s*:%s*"([^"]+)"') or ""
   if cmd_id and cmd_name and cmd_id ~= "" then
-    execute_command(cmd_name)
+    execute_command(cmd_name, cmd_bid)
     last_ack_id = cmd_id
   end
 end

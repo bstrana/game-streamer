@@ -455,7 +455,13 @@ class Handler(BaseHTTPRequestHandler):
             if command not in ('start_streaming', 'stop_streaming'):
                 self._json(400, {'error': 'command must be start_streaming or stop_streaming'})
                 return
+            broadcast_id = body.get('broadcastId', '').strip()
+            if broadcast_id and not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                self._json(400, {'error': 'Invalid broadcastId'})
+                return
             cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
+            if broadcast_id:
+                cmd['broadcastId'] = broadcast_id
             _save_obs_command(cmd)
             self._json(200, {'ok': True, 'commandId': cmd['id']})
         except (json.JSONDecodeError, ValueError) as exc:
