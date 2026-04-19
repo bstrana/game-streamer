@@ -337,8 +337,10 @@ function script_load(settings)
   current_settings = settings
   obs.obs_frontend_add_event_callback(function(event)
     if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING then
-      obs.obs_frontend_add_tools_menu_item(
-        "Game Streamer: Update Scoreboard", add_or_update_source)
+      if obs.obs_frontend_add_tools_menu_item then
+        obs.obs_frontend_add_tools_menu_item(
+          "Game Streamer: Update Scoreboard", add_or_update_source)
+      end
     end
   end)
   -- Start streaming-control heartbeat (reports status + picks up commands)
