@@ -26,8 +26,8 @@ function sortMatches(all) {
     if (!a.time && !b.time) return 0;
     if (!a.time) return 1;
     if (!b.time) return -1;
-    // Today: earliest game first; others: newest first
-    return aT ? a.time.localeCompare(b.time) : b.time.localeCompare(a.time);
+    // Today: earliest game first; future/past: soonest upcoming first (ascending)
+    return a.time.localeCompare(b.time);
   });
 }
 
