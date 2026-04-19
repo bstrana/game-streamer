@@ -21,9 +21,11 @@ Endpoints – YouTube scheduling:
   POST   /api/youtube/schedule      – create & bind a YouTube live broadcast
 """
 
+import ipaddress
 import json
 import os
 import re
+import socket
 import sys
 import time
 import traceback
@@ -40,6 +42,7 @@ MATCHES_FILE  = os.path.join(DATA_DIR, 'matches.json')
 TOKENS_FILE   = os.path.join(DATA_DIR, 'youtube-tokens.json')
 OBS_STATUS_FILE  = os.path.join(DATA_DIR, 'obs-status.json')
 OBS_COMMAND_FILE = os.path.join(DATA_DIR, 'obs-command.json')
+OBS_SECRET_FILE  = os.path.join(DATA_DIR, 'obs-secret.txt')
 os.makedirs(SETTINGS_DIR, exist_ok=True)
 
 GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID', '')
@@ -78,6 +81,61 @@ def _validate_match(data):
 
 def _log_exc(context=''):
     print(f'[api] {context}: {traceback.format_exc()}', file=sys.stderr, flush=True)
+
+
+def _get_obs_secret():
+    """Return the persistent OBS API secret, generating it on first call."""
+    if os.path.exists(OBS_SECRET_FILE):
+        try:
+            with open(OBS_SECRET_FILE, encoding='utf-8') as f:
+                s = f.read().strip()
+            if s:
+                return s
+        except Exception:
+            pass
+    s = str(_uuid.uuid4())
+    with open(OBS_SECRET_FILE, 'w', encoding='utf-8') as f:
+        f.write(s)
+    try:
+        os.chmod(OBS_SECRET_FILE, 0o600)
+    except Exception:
+        pass
+    return s
+
+
+# Private IPv4/IPv6 ranges that must never be fetched (SSRF guard)
+_PRIVATE_NETS = [
+    ipaddress.ip_network('10.0.0.0/8'),
+    ipaddress.ip_network('172.16.0.0/12'),
+    ipaddress.ip_network('192.168.0.0/16'),
+    ipaddress.ip_network('127.0.0.0/8'),
+    ipaddress.ip_network('169.254.0.0/16'),   # link-local / AWS metadata
+    ipaddress.ip_network('100.64.0.0/10'),    # Carrier-grade NAT
+    ipaddress.ip_network('::1/128'),
+    ipaddress.ip_network('fc00::/7'),
+    ipaddress.ip_network('fe80::/10'),
+]
+
+def _assert_safe_url(url):
+    """Raise ValueError if url is non-HTTPS or resolves to a private address."""
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != 'https':
+        raise ValueError('URL must use HTTPS')
+    host = parsed.hostname or ''
+    if not host:
+        raise ValueError('URL has no hostname')
+    try:
+        infos = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    except socket.gaierror as exc:
+        raise ValueError(f'Could not resolve hostname: {exc}')
+    for info in infos:
+        addr_str = info[4][0]
+        try:
+            ip = ipaddress.ip_address(addr_str)
+        except ValueError:
+            continue
+        if any(ip in net for net in _PRIVATE_NETS):
+            raise ValueError(f'URL resolves to a private/reserved address ({addr_str})')
 
 ALLOWED_SETTINGS_KEYS = {
     'away', 'home',
@@ -196,6 +254,10 @@ def _load_tokens():
 def _save_tokens(tokens):
     with open(TOKENS_FILE, 'w', encoding='utf-8') as f:
         json.dump(tokens, f)
+    try:
+        os.chmod(TOKENS_FILE, 0o600)
+    except Exception:
+        pass
 
 
 def _get_access_token():
@@ -233,9 +295,8 @@ def _yt(path, method='GET', body=None, token=None):
 
 
 def _upload_thumbnail(broadcast_id, thumbnail_url, token):
+    _assert_safe_url(thumbnail_url)
     parsed = urllib.parse.urlparse(thumbnail_url)
-    if parsed.scheme != 'https':
-        raise ValueError('Thumbnail URL must use HTTPS')
     # Fetch image with tight timeout and size cap to prevent SSRF/DoS
     req = urllib.request.Request(thumbnail_url)
     req.add_header('User-Agent', 'GameStreamer-thumbnail/1.0')
@@ -261,7 +322,17 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _cors(self):
-        self.send_header('Access-Control-Allow-Origin', '*')
+        if APP_BASE_URL:
+            # Production: only echo back the origin if it matches the app's own URL.
+            # Same-origin SPA requests don't send Origin, so no CORS header is needed.
+            # This prevents cross-origin requests from other websites.
+            origin = self.headers.get('Origin', '')
+            if origin == APP_BASE_URL:
+                self.send_header('Access-Control-Allow-Origin', origin)
+                self.send_header('Vary', 'Origin')
+        else:
+            # Development (no APP_BASE_URL): allow all so vite dev server can reach the API.
+            self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
@@ -289,7 +360,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/api/youtube/'):
             self._yt_get()
-        elif self.path == '/api/obs/status':
+        elif self.path in ('/api/obs/status', '/api/obs/secret'):
             self._obs_get()
         elif self.path.startswith('/api/matches'):
             self._matches_get()
@@ -414,7 +485,14 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── OBS status & commands ─────────────────────────────────────────────────
 
+    def _check_obs_auth(self):
+        expected = f'Bearer {_get_obs_secret()}'
+        return self.headers.get('Authorization', '') == expected
+
     def _obs_get(self):
+        if self.path == '/api/obs/secret':
+            self._json(200, {'secret': _get_obs_secret()})
+            return
         status = _load_obs_status()
         command = _load_obs_command()
         self._json(200, {
@@ -427,6 +505,9 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     def _obs_put(self):
+        if not self._check_obs_auth():
+            self._json(401, {'error': 'Unauthorized'})
+            return
         try:
             body = json.loads(self._body())
             status = {
@@ -449,6 +530,9 @@ class Handler(BaseHTTPRequestHandler):
             self._json(500, {'error': 'Internal server error'})
 
     def _obs_command_post(self):
+        if not self._check_obs_auth():
+            self._json(401, {'error': 'Unauthorized'})
+            return
         try:
             body = json.loads(self._body())
             command = body.get('command', '')
