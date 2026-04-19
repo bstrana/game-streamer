@@ -34,13 +34,83 @@ local last_ack_id    = ""
 local poll_running   = false   -- guard against overlapping polls
 
 -- Platform-safe temp file for PUT request body
+local IS_WIN = package.config:sub(1, 1) == "\\"
 local function tmp_path()
   local t = os.getenv("TEMP") or os.getenv("TMPDIR") or "/tmp"
-  -- Normalize Windows backslashes, append filename
-  t = t:gsub("\\$", ""):gsub("/+$", "")
-  return t .. (package.config:sub(1,1) == "\\" and "\\" or "/") .. "gs_obs_body.json"
+  t = t:gsub("[/\\]+$", "")
+  return t .. (IS_WIN and "\\" or "/") .. "gs_obs_body.json"
 end
 local TMP_FILE = tmp_path()
+
+-- ── Windows silent-process launcher (avoids CMD flash) ────────────────────────
+-- On Windows, io.popen spawns cmd.exe which creates a visible console window.
+-- Instead we use LuaJIT FFI to call CreateProcess with CREATE_NO_WINDOW.
+local _ffi = nil
+if IS_WIN then
+  local ok, f = pcall(require, "ffi")
+  if ok then
+    -- pcall prevents errors if types are already defined from a previous load
+    pcall(f.cdef, [[
+      typedef void*          GS_HANDLE;
+      typedef unsigned long  GS_DWORD;
+      typedef unsigned short GS_WORD;
+      typedef int            GS_BOOL;
+      typedef struct { GS_DWORD n; GS_HANDLE sd; GS_BOOL inh; } GS_SA;
+      typedef struct {
+        GS_DWORD cb; char *r1, *desk, *title;
+        GS_DWORD x, y, xs, ys, xcc, ycc, fill, fl;
+        GS_WORD  show, r2; char *r3;
+        GS_HANDLE hin, hout, herr;
+      } GS_SI;
+      typedef struct { GS_HANDLE proc, thr; GS_DWORD pid, tid; } GS_PI;
+      GS_BOOL  CreatePipe(GS_HANDLE*, GS_HANDLE*, GS_SA*, GS_DWORD);
+      GS_BOOL  SetHandleInformation(GS_HANDLE, GS_DWORD, GS_DWORD);
+      GS_BOOL  CreateProcessA(const char*, char*, void*, void*, GS_BOOL, GS_DWORD,
+                              void*, const char*, GS_SI*, GS_PI*);
+      GS_DWORD WaitForSingleObject(GS_HANDLE, GS_DWORD);
+      GS_BOOL  ReadFile(GS_HANDLE, void*, GS_DWORD, GS_DWORD*, void*);
+      GS_BOOL  CloseHandle(GS_HANDLE);
+    ]])
+    _ffi = f
+  end
+end
+
+-- Run a curl command and return stdout. No visible window on Windows.
+local function run_curl(cmd)
+  if IS_WIN and _ffi then
+    local C  = _ffi.C
+    local rd = _ffi.new("GS_HANDLE[1]")
+    local wr = _ffi.new("GS_HANDLE[1]")
+    local sa = _ffi.new("GS_SA")
+    sa.n = _ffi.sizeof("GS_SA"); sa.inh = 1
+    if C.CreatePipe(rd, wr, sa, 0) == 0 then return nil end
+    C.SetHandleInformation(rd[0], 1, 0)  -- clear HANDLE_FLAG_INHERIT on read-end
+    local si = _ffi.new("GS_SI")
+    si.cb   = _ffi.sizeof("GS_SI")
+    si.fl   = 0x100  -- STARTF_USESTDHANDLES
+    si.hin  = _ffi.cast("GS_HANDLE", 0)
+    si.hout = wr[0]; si.herr = wr[0]
+    local pi  = _ffi.new("GS_PI")
+    local buf = _ffi.new("char[?]", #cmd + 1, cmd)
+    local ok  = C.CreateProcessA(nil, buf, nil, nil, 1, 0x08000000, nil, nil, si, pi)
+    C.CloseHandle(wr[0])
+    if ok == 0 then C.CloseHandle(rd[0]); return nil end
+    local parts = {}
+    local b = _ffi.new("char[4096]")
+    local n = _ffi.new("GS_DWORD[1]")
+    while C.ReadFile(rd[0], b, 4096, n, nil) ~= 0 and n[0] > 0 do
+      parts[#parts + 1] = _ffi.string(b, n[0])
+    end
+    C.WaitForSingleObject(pi.proc, 8000)
+    C.CloseHandle(pi.proc); C.CloseHandle(pi.thr); C.CloseHandle(rd[0])
+    return table.concat(parts)
+  else
+    local h = io.popen(cmd)
+    local r = h and h:read("*a") or nil
+    if h then h:close() end
+    return r
+  end
+end
 
 -- ── Helpers ───────────────────────────────────────────────────────────────────
 -- OBS stores colours as ARGB: bits 24-31 = alpha, 16-23 = red, 8-15 = green, 0-7 = blue.
@@ -93,15 +163,13 @@ local function fetch_game_settings()
     return
   end
 
-  local url    = base .. "/api/game-settings/" .. game_id
-  local handle = io.popen(string.format('curl -s --max-time 8 "%s"', url))
-  if not handle then
+  local url  = base .. "/api/game-settings/" .. game_id
+  local resp = run_curl(string.format('curl -s --max-time 8 "%s"', url))
+  if not resp then
     obs.script_log(obs.LOG_WARNING,
       "Game Streamer: curl not available — install curl to use Fetch Settings.")
     return
   end
-  local resp = handle:read("*a")
-  handle:close()
 
   if not resp or resp == "" or resp:find('"error"') then
     obs.script_log(obs.LOG_WARNING,
@@ -202,14 +270,10 @@ local function http_put_json(url, body)
   if not f then return nil end
   f:write(body)
   f:close()
-  local cmd = string.format(
+  return run_curl(string.format(
     'curl -s --max-time 2 -X PUT -H "Content-Type: application/json" --data-binary "@%s" "%s"',
     TMP_FILE, url
-  )
-  local handle = io.popen(cmd)
-  local resp   = handle and handle:read("*a") or nil
-  if handle then handle:close() end
-  return resp
+  ))
 end
 
 -- Execute a command received from the app server
