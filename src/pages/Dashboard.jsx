@@ -314,7 +314,7 @@ function BulkScheduleModal({ matches, onClose, onScheduled }) {
 
 // ── Match row ─────────────────────────────────────────────────────────────────
 
-function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected, selectMode, selected, onToggleSelect, broadcastStatus, onTransition }) {
+function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected, selectMode, selected, onToggleSelect, broadcastStatus, onTransition, obsConnected, obsStreaming, obsLoading, onObsStart }) {
   const overlayUrl = `${BASE_URL}/overlay/${match.id}`;
   const today = isToday(match);
   const bStatus = broadcastStatus?.status;
@@ -385,6 +385,16 @@ function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected
               title={ytConnected ? 'Schedule on YouTube' : 'Connect YouTube in settings first'}
             >
               ▶ YouTube
+            </button>
+          )}
+          {match.broadcastId && obsConnected && !obsStreaming && (
+            <button
+              className="btn btn-sm btn-live"
+              disabled={obsLoading}
+              onClick={() => onObsStart(match.broadcastId)}
+              title="Start OBS stream for this broadcast"
+            >
+              ▶ Stream
             </button>
           )}
           <button className="btn btn-sm btn-danger" onClick={handleDelete}>Delete</button>
@@ -486,13 +496,13 @@ export default function Dashboard() {
     refresh();
   };
 
-  const handleObsCommand = async (command) => {
+  const handleObsCommand = async (command, broadcastId) => {
     setObsLoading(true);
     try {
       await fetch('/api/obs/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command }),
+        body: JSON.stringify({ command, ...(broadcastId ? { broadcastId } : {}) }),
       });
     } catch {}
     setObsLoading(false);
@@ -573,11 +583,6 @@ export default function Dashboard() {
             <span className="obs-bar-state">Not connected — open OBS with the script loaded</span>
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-            {obsStatus.connected && !obsStatus.streaming && (
-              <button className="btn btn-sm btn-live" disabled={obsLoading} onClick={() => handleObsCommand('start_streaming')}>
-                ▶ Start Stream
-              </button>
-            )}
             {obsStatus.connected && obsStatus.streaming && (
               <button className="btn btn-sm btn-danger" disabled={obsLoading} onClick={() => handleObsCommand('stop_streaming')}>
                 ⏹ Stop Stream
@@ -609,6 +614,10 @@ export default function Dashboard() {
               onToggleSelect={handleToggleSelect}
               broadcastStatus={m.broadcastId ? (broadcastStatuses[m.broadcastId] || null) : null}
               onTransition={handleTransition}
+              obsConnected={obsStatus?.connected || false}
+              obsStreaming={obsStatus?.streaming || false}
+              obsLoading={obsLoading}
+              onObsStart={(broadcastId) => handleObsCommand('start_streaming', broadcastId)}
             />
           ))}
         </div>
