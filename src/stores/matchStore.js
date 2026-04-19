@@ -55,12 +55,12 @@ export async function duplicateMatch(id) {
   const match = await getMatch(id);
   if (!match) return null;
   // eslint-disable-next-line no-unused-vars
-  const { id: _id, createdAt: _ca, updatedAt: _ua, youtubeUrl: _yt, ...rest } = match;
+  const { id: _id, createdAt: _ca, updatedAt: _ua, youtubeUrl: _yt, broadcastId: _bid, ...rest } = match;
   return createMatch(rest);
 }
 
-export async function setMatchYouTubeUrl(id, youtubeUrl) {
-  return updateMatch(id, { youtubeUrl });
+export async function setMatchYouTubeUrl(id, youtubeUrl, broadcastId) {
+  return updateMatch(id, { youtubeUrl, ...(broadcastId ? { broadcastId } : {}) });
 }
 
 // One-time migration: move any existing localStorage matches to the server.

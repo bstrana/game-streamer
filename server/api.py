@@ -60,6 +60,7 @@ MATCH_STR_LIMITS = {
     'awayPrimaryColor': 7, 'awaySecondaryColor': 7,
     'homePrimaryColor': 7, 'homeSecondaryColor': 7,
     'youtubeUrl': 2048, 'streamUrl': 2048,
+    'broadcastId': 64,
 }
 COLOR_FIELDS = {'awayPrimaryColor', 'awaySecondaryColor', 'homePrimaryColor', 'homeSecondaryColor'}
 
@@ -425,6 +426,42 @@ class Handler(BaseHTTPRequestHandler):
             })
             self._json(200, {'url': f'{GOOGLE_AUTH_URL}?{params}'})
 
+        elif self.path.startswith('/api/youtube/broadcast-status'):
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            ids_str = params.get('ids', [''])[0]
+            if not ids_str:
+                self._json(400, {'error': 'ids param required'})
+                return
+            token = _get_access_token()
+            if not token:
+                self._json(401, {'error': 'YouTube not connected'})
+                return
+            try:
+                raw_ids = [i.strip() for i in ids_str.split(',') if i.strip()][:50]
+                safe_ids = [i for i in raw_ids if re.match(r'^[A-Za-z0-9_\-]{1,64}$', i)]
+                if not safe_ids:
+                    self._json(400, {'error': 'No valid ids'})
+                    return
+                id_param = urllib.parse.quote(','.join(safe_ids))
+                data = _yt(
+                    f'/liveBroadcasts?part=status,statistics&id={id_param}',
+                    token=token,
+                )
+                statuses = {}
+                for item in data.get('items', []):
+                    bid = item['id']
+                    statuses[bid] = {
+                        'status': item.get('status', {}).get('lifeCycleStatus', 'unknown'),
+                        'concurrentViewers': int(item.get('statistics', {}).get('concurrentViewers') or 0),
+                    }
+                self._json(200, {'statuses': statuses})
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('broadcast-status')
+                self._json(500, {'error': 'Internal server error'})
+
         else:
             self._json(404, {'error': 'not found'})
 
@@ -537,6 +574,78 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(exc.code, {'error': err_body})
             except Exception as exc:
                 self._json(500, {'error': str(exc)})
+
+        elif self.path == '/api/youtube/transition':
+            try:
+                body = json.loads(self._body())
+                broadcast_id = body.get('broadcastId', '').strip()
+                status = body.get('status', '')
+                if not broadcast_id or not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                    self._json(400, {'error': 'Invalid broadcastId'})
+                    return
+                if status not in ('testing', 'live', 'complete'):
+                    self._json(400, {'error': 'status must be testing, live, or complete'})
+                    return
+                token = _get_access_token()
+                if not token:
+                    self._json(401, {'error': 'YouTube not connected'})
+                    return
+                result = _yt(
+                    f'/liveBroadcasts/transition?broadcastStatus={status}'
+                    f'&id={urllib.parse.quote(broadcast_id)}&part=id,status',
+                    method='POST', body=b'', token=token,
+                )
+                self._json(200, {
+                    'ok': True,
+                    'status': result.get('status', {}).get('lifeCycleStatus', 'unknown'),
+                })
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('transition')
+                self._json(500, {'error': 'Internal server error'})
+
+        elif self.path == '/api/youtube/update-broadcast':
+            try:
+                body = json.loads(self._body())
+                broadcast_id = body.get('broadcastId', '').strip()
+                if not broadcast_id or not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                    self._json(400, {'error': 'Invalid broadcastId'})
+                    return
+                token = _get_access_token()
+                if not token:
+                    self._json(401, {'error': 'YouTube not connected'})
+                    return
+                existing = _yt(
+                    f'/liveBroadcasts?part=snippet,status&id={urllib.parse.quote(broadcast_id)}',
+                    token=token,
+                )
+                items = existing.get('items', [])
+                if not items:
+                    self._json(404, {'error': 'Broadcast not found'})
+                    return
+                snippet = dict(items[0].get('snippet', {}))
+                status_obj = dict(items[0].get('status', {}))
+                if 'title' in body:
+                    snippet['title'] = str(body['title'])[:100]
+                if 'description' in body:
+                    snippet['description'] = str(body['description'])[:5000]
+                if 'scheduledStartTime' in body:
+                    snippet['scheduledStartTime'] = body['scheduledStartTime']
+                if body.get('privacy') in ('public', 'private', 'unlisted'):
+                    status_obj['privacyStatus'] = body['privacy']
+                update_body = json.dumps({
+                    'id': broadcast_id,
+                    'snippet': snippet,
+                    'status': status_obj,
+                }).encode()
+                _yt('/liveBroadcasts?part=snippet,status', method='PUT', body=update_body, token=token)
+                self._json(200, {'ok': True})
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('update-broadcast')
+                self._json(500, {'error': 'Internal server error'})
 
         else:
             self._json(404, {'error': 'not found'})

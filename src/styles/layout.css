@@ -229,6 +229,20 @@
 .chip-missing { color: var(--text-muted); font-style: italic; }
 .chip-today   { background: rgba(34,197,94,.12); color: var(--success); border-color: var(--success); font-weight: 700; letter-spacing: .04em; }
 
+.chip-status  { font-weight: 600; }
+.chip-status-live     { background: rgba(239,68,68,.12); color: var(--danger); border-color: var(--danger); animation: pulse-live 2s ease-in-out infinite; }
+.chip-status-testing  { background: rgba(245,158,11,.1);  color: #f59e0b; border-color: #f59e0b; }
+.chip-status-complete { background: rgba(100,116,139,.1); color: var(--text-muted); border-color: transparent; }
+.chip-viewers { background: rgba(239,68,68,.08); color: var(--danger); border-color: rgba(239,68,68,.3); }
+
+.btn-live { background: #dc2626; color: #fff; border: none; }
+.btn-live:hover { background: #b91c1c; }
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .65; }
+}
+
 .match-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
 
 /* Select checkbox inside card header */

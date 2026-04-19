@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { getMatch, createMatch, updateMatch } from '../stores/matchStore';
@@ -55,11 +55,13 @@ export default function MatchEdit() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const broadcastIdRef = useRef('');
 
   useEffect(() => {
     if (!isNew) {
       getMatch(id).then(match => {
         if (!match) { navigate('/'); return; }
+        broadcastIdRef.current = match.broadcastId || '';
         setForm({
           awayTeam: match.awayTeam,
           homeTeam: match.homeTeam,
@@ -124,6 +126,18 @@ export default function MatchEdit() {
       await createMatch(data);
     } else {
       await updateMatch(id, data);
+      if (broadcastIdRef.current) {
+        fetch('/api/youtube/update-broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            broadcastId: broadcastIdRef.current,
+            title: `${data.awayTeam} vs ${data.homeTeam}`,
+            description: data.streamDescription || '',
+            ...(data.time ? { scheduledStartTime: data.time } : {}),
+          }),
+        }).catch(() => {});
+      }
     }
     navigate('/');
   };
