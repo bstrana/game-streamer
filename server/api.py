@@ -502,6 +502,7 @@ class Handler(BaseHTTPRequestHandler):
             'streaming':      status.get('streaming', False),
             'recording':      status.get('recording', False),
             'scene':          status.get('scene', ''),
+            'scenes':         status.get('scenes', []),
             'updatedAt':      status.get('updatedAt'),
             'pendingCommand': command if command.get('id') else None,
         })
@@ -512,10 +513,16 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             body = json.loads(self._body())
+            raw_scenes = body.get('scenes', [])
+            scenes = (
+                [str(s)[:200] for s in raw_scenes if isinstance(s, str)][:50]
+                if isinstance(raw_scenes, list) else []
+            )
             status = {
                 'streaming': bool(body.get('streaming', False)),
                 'recording': bool(body.get('recording', False)),
                 'scene':     str(body.get('scene', ''))[:200],
+                'scenes':    scenes,
                 'updatedAt': _now_iso(),
             }
             _save_obs_status(status)
@@ -538,16 +545,22 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = json.loads(self._body())
             command = body.get('command', '')
-            if command not in ('start_streaming', 'stop_streaming'):
-                self._json(400, {'error': 'command must be start_streaming or stop_streaming'})
+            if command not in ('start_streaming', 'stop_streaming', 'switch_scene'):
+                self._json(400, {'error': 'command must be start_streaming, stop_streaming, or switch_scene'})
                 return
             broadcast_id = body.get('broadcastId', '').strip()
             if broadcast_id and not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
                 self._json(400, {'error': 'Invalid broadcastId'})
                 return
+            scene = str(body.get('scene', ''))[:200].strip()
+            if command == 'switch_scene' and not scene:
+                self._json(400, {'error': 'scene is required for switch_scene'})
+                return
             cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
             if broadcast_id:
                 cmd['broadcastId'] = broadcast_id
+            if scene:
+                cmd['scene'] = scene
             _save_obs_command(cmd)
             self._json(200, {'ok': True, 'commandId': cmd['id']})
         except (json.JSONDecodeError, ValueError) as exc:

@@ -533,7 +533,7 @@ export default function Dashboard() {
     refresh();
   };
 
-  const handleObsCommand = async (command, broadcastId) => {
+  const handleObsCommand = async (command, extras = {}) => {
     setObsLoading(true);
     try {
       const headers = { 'Content-Type': 'application/json' };
@@ -541,7 +541,7 @@ export default function Dashboard() {
       await fetch('/api/obs/command', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ command, ...(broadcastId ? { broadcastId } : {}) }),
+        body: JSON.stringify({ command, ...extras }),
       });
     } catch {}
     setObsLoading(false);
@@ -613,7 +613,18 @@ export default function Dashboard() {
           <span className="obs-bar-label">OBS</span>
           {obsStatus.connected ? (
             <>
-              <span className="obs-bar-scene">{obsStatus.scene || '—'}</span>
+              {obsStatus.scenes?.length > 1 ? (
+                <select
+                  className="obs-scene-select"
+                  value={obsStatus.scene || ''}
+                  disabled={obsLoading}
+                  onChange={e => handleObsCommand('switch_scene', { scene: e.target.value })}
+                >
+                  {obsStatus.scenes.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <span className="obs-bar-scene">{obsStatus.scene || '—'}</span>
+              )}
               <span className={`obs-bar-state ${obsStatus.streaming ? 'obs-state-live' : ''}`}>
                 {obsStatus.streaming ? '● Streaming' : obsStatus.recording ? '● Recording' : 'Idle'}
               </span>
@@ -656,7 +667,7 @@ export default function Dashboard() {
               obsConnected={obsStatus?.connected || false}
               obsStreaming={obsStatus?.streaming || false}
               obsLoading={obsLoading}
-              onObsStart={(broadcastId) => handleObsCommand('start_streaming', broadcastId)}
+              onObsStart={(broadcastId) => handleObsCommand('start_streaming', { broadcastId })}
             />
           ))}
         </div>

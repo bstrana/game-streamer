@@ -302,7 +302,7 @@ local function http_put_json(url, body, secret)
 end
 
 -- Execute a command received from the app server
-local function execute_command(command, broadcast_id)
+local function execute_command(command, broadcast_id, scene_name)
   if command == "start_streaming" then
     if not obs.obs_frontend_streaming_active() then
       if broadcast_id and broadcast_id ~= "" then
@@ -325,6 +325,17 @@ local function execute_command(command, broadcast_id)
     if obs.obs_frontend_streaming_active() then
       obs.obs_frontend_stop_streaming()
       obs.script_log(obs.LOG_INFO, "Game Streamer: stopped streaming via remote command")
+    end
+  elseif command == "switch_scene" then
+    if scene_name and scene_name ~= "" then
+      local src = obs.obs_get_source_by_name(scene_name)
+      if src then
+        obs.obs_frontend_set_current_scene(src)
+        obs.obs_source_release(src)
+        obs.script_log(obs.LOG_INFO, "Game Streamer: switched to scene: " .. scene_name)
+      else
+        obs.script_log(obs.LOG_WARNING, "Game Streamer: scene not found: " .. scene_name)
+      end
     end
   end
 end
@@ -349,11 +360,23 @@ local function poll_streaming_control()
     obs.obs_source_release(scene_src)
   end
 
+  -- Collect available scene names
+  local scene_parts = {}
+  local scene_list = obs.obs_frontend_get_scenes()
+  if scene_list then
+    for _, src in ipairs(scene_list) do
+      local n = (obs.obs_source_get_name(src) or ""):gsub('\\', '\\\\'):gsub('"', '\\"')
+      if n ~= "" then scene_parts[#scene_parts + 1] = '"' .. n .. '"' end
+    end
+    obs.source_list_release(scene_list)
+  end
+
   local body = string.format(
-    '{"streaming":%s,"recording":%s,"scene":"%s"%s}',
+    '{"streaming":%s,"recording":%s,"scene":"%s","scenes":[%s]%s}',
     streaming and "true" or "false",
     recording and "true" or "false",
     scene,
+    table.concat(scene_parts, ","),
     last_ack_id ~= "" and (',"ackCommandId":"' .. last_ack_id .. '"') or ""
   )
   last_ack_id = ""
@@ -364,11 +387,12 @@ local function poll_streaming_control()
   if not resp or resp == "" then return end
 
   -- Parse pendingCommand from response (minimal JSON extraction)
-  local cmd_id   = resp:match('"id"%s*:%s*"([^"]+)"')
-  local cmd_name = resp:match('"command"%s*:%s*"([^"]+)"')
-  local cmd_bid  = resp:match('"broadcastId"%s*:%s*"([^"]+)"') or ""
+  local cmd_id    = resp:match('"id"%s*:%s*"([^"]+)"')
+  local cmd_name  = resp:match('"command"%s*:%s*"([^"]+)"')
+  local cmd_bid   = resp:match('"broadcastId"%s*:%s*"([^"]+)"') or ""
+  local cmd_scene = resp:match('"scene"%s*:%s*"([^"]+)"') or ""
   if cmd_id and cmd_name and cmd_id ~= "" then
-    execute_command(cmd_name, cmd_bid)
+    execute_command(cmd_name, cmd_bid, cmd_scene)
     last_ack_id = cmd_id
   end
 end
