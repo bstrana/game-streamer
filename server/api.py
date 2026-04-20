@@ -391,6 +391,8 @@ class Handler(BaseHTTPRequestHandler):
             if os.path.exists(TOKENS_FILE):
                 os.remove(TOKENS_FILE)
             self._json(200, {'ok': True})
+        elif self.path == '/api/youtube/broadcast':
+            self._yt_delete_broadcast()
         elif self.path.startswith('/api/matches/'):
             self._matches_delete()
         else:
@@ -500,6 +502,7 @@ class Handler(BaseHTTPRequestHandler):
             'streaming':      status.get('streaming', False),
             'recording':      status.get('recording', False),
             'scene':          status.get('scene', ''),
+            'scenes':         status.get('scenes', []),
             'updatedAt':      status.get('updatedAt'),
             'pendingCommand': command if command.get('id') else None,
         })
@@ -510,10 +513,16 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             body = json.loads(self._body())
+            raw_scenes = body.get('scenes', [])
+            scenes = (
+                [str(s)[:200] for s in raw_scenes if isinstance(s, str)][:50]
+                if isinstance(raw_scenes, list) else []
+            )
             status = {
                 'streaming': bool(body.get('streaming', False)),
                 'recording': bool(body.get('recording', False)),
                 'scene':     str(body.get('scene', ''))[:200],
+                'scenes':    scenes,
                 'updatedAt': _now_iso(),
             }
             _save_obs_status(status)
@@ -536,22 +545,55 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = json.loads(self._body())
             command = body.get('command', '')
-            if command not in ('start_streaming', 'stop_streaming'):
-                self._json(400, {'error': 'command must be start_streaming or stop_streaming'})
+            if command not in ('start_streaming', 'stop_streaming', 'switch_scene'):
+                self._json(400, {'error': 'command must be start_streaming, stop_streaming, or switch_scene'})
                 return
             broadcast_id = body.get('broadcastId', '').strip()
             if broadcast_id and not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
                 self._json(400, {'error': 'Invalid broadcastId'})
                 return
+            scene = str(body.get('scene', ''))[:200].strip()
+            if command == 'switch_scene' and not scene:
+                self._json(400, {'error': 'scene is required for switch_scene'})
+                return
             cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
             if broadcast_id:
                 cmd['broadcastId'] = broadcast_id
+            if scene:
+                cmd['scene'] = scene
             _save_obs_command(cmd)
             self._json(200, {'ok': True, 'commandId': cmd['id']})
         except (json.JSONDecodeError, ValueError) as exc:
             self._json(400, {'error': str(exc)})
         except Exception:
             _log_exc('obs_command_post')
+            self._json(500, {'error': 'Internal server error'})
+
+    def _yt_delete_broadcast(self):
+        try:
+            body = json.loads(self._body())
+            broadcast_id = body.get('broadcastId', '').strip()
+            if not broadcast_id or not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                self._json(400, {'error': 'Invalid broadcastId'})
+                return
+            token = _get_access_token()
+            if not token:
+                self._json(401, {'error': 'YouTube not connected'})
+                return
+            url = f'{YT_API_BASE}/liveBroadcasts?id={urllib.parse.quote(broadcast_id)}'
+            req = urllib.request.Request(url, method='DELETE')
+            req.add_header('Authorization', f'Bearer {token}')
+            try:
+                with urllib.request.urlopen(req):
+                    pass  # 204 No Content
+            except urllib.error.HTTPError as exc:
+                if exc.code != 204:
+                    raise
+            self._json(200, {'ok': True})
+        except urllib.error.HTTPError as exc:
+            self._json(exc.code, {'error': exc.read().decode()})
+        except Exception:
+            _log_exc('delete-broadcast')
             self._json(500, {'error': 'Internal server error'})
 
     # ── Game-settings ─────────────────────────────────────────────────────
