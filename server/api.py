@@ -391,6 +391,8 @@ class Handler(BaseHTTPRequestHandler):
             if os.path.exists(TOKENS_FILE):
                 os.remove(TOKENS_FILE)
             self._json(200, {'ok': True})
+        elif self.path == '/api/youtube/broadcast':
+            self._yt_delete_broadcast()
         elif self.path.startswith('/api/matches/'):
             self._matches_delete()
         else:
@@ -552,6 +554,33 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {'error': str(exc)})
         except Exception:
             _log_exc('obs_command_post')
+            self._json(500, {'error': 'Internal server error'})
+
+    def _yt_delete_broadcast(self):
+        try:
+            body = json.loads(self._body())
+            broadcast_id = body.get('broadcastId', '').strip()
+            if not broadcast_id or not re.match(r'^[A-Za-z0-9_\-]{1,64}$', broadcast_id):
+                self._json(400, {'error': 'Invalid broadcastId'})
+                return
+            token = _get_access_token()
+            if not token:
+                self._json(401, {'error': 'YouTube not connected'})
+                return
+            url = f'{YT_API_BASE}/liveBroadcasts?id={urllib.parse.quote(broadcast_id)}'
+            req = urllib.request.Request(url, method='DELETE')
+            req.add_header('Authorization', f'Bearer {token}')
+            try:
+                with urllib.request.urlopen(req):
+                    pass  # 204 No Content
+            except urllib.error.HTTPError as exc:
+                if exc.code != 204:
+                    raise
+            self._json(200, {'ok': True})
+        except urllib.error.HTTPError as exc:
+            self._json(exc.code, {'error': exc.read().decode()})
+        except Exception:
+            _log_exc('delete-broadcast')
             self._json(500, {'error': 'Internal server error'})
 
     # ── Game-settings ─────────────────────────────────────────────────────

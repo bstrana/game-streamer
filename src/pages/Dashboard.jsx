@@ -324,11 +324,7 @@ function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected
   const STATUS_LABEL = { live: '● LIVE', testing: '● Preview', complete: 'Ended', ready: 'Scheduled', created: 'Scheduled' };
   const STATUS_CLS   = { live: 'chip-status-live', testing: 'chip-status-testing', complete: 'chip-status-complete' };
 
-  const handleDelete = () => {
-    if (window.confirm(`Delete "${match.awayTeam} vs ${match.homeTeam}"?`)) {
-      onDelete(match.id);
-    }
-  };
+  const handleDelete = () => onDelete(match.id);
 
   return (
     <div className={`match-card ${today ? 'match-card-today' : ''} ${selected ? 'match-card-selected' : ''}`}>
@@ -499,6 +495,24 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
+    const match = matches.find(m => m.id === id);
+    if (!match) return;
+    const label = `"${match.awayTeam} vs ${match.homeTeam}"`;
+    if (!window.confirm(`Delete ${label}?`)) return;
+    if (match.broadcastId) {
+      const alsoYT = window.confirm(
+        `This match has a scheduled YouTube broadcast.\nAlso delete it from YouTube?\n\nOK = delete from YouTube too\nCancel = keep the YouTube broadcast`
+      );
+      if (alsoYT) {
+        try {
+          await fetch('/api/youtube/broadcast', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ broadcastId: match.broadcastId }),
+          });
+        } catch {}
+      }
+    }
     await deleteMatch(id);
     setSelectedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
     refresh();
