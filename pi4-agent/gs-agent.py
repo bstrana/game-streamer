@@ -26,6 +26,7 @@ DEFAULT_CONFIG = {
     'activeSource': 'usb',
     'usbDevice': '/dev/video0',
     'rtspUrl': '',
+    'rtmpUrl': '',          # optional hard-coded RTMP URL override (incl. stream key)
     'resolution': '1920x1080',
     'framerate': 25,
     'videoBitrate': 2500,
@@ -114,15 +115,18 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # RTSP IP camera already outputs H.264 — copy the stream directly
-            # to RTMP without re-encoding. Avoids pixel format issues and is
-            # much lighter on the Pi4 (no transcoding).
+            # RTSP IP camera already outputs H.264 — copy stream to RTMP.
+            # +genpts:        generate missing timestamps (fixes FLV muxer warning)
+            # +discardcorrupt: drop corrupt packets instead of aborting
+            # -avoid_negative_ts: fix negative timestamp warnings for FLV
             rtsp_url = cfg.get('rtspUrl', '')
             cmd = [
                 'ffmpeg',
                 '-rtsp_transport', 'tcp',
+                '-fflags', '+genpts+discardcorrupt',
                 '-i', rtsp_url,
                 '-c:v', 'copy',
+                '-avoid_negative_ts', 'make_zero',
             ]
             if has_audio:
                 cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
@@ -229,11 +233,12 @@ class StreamAgent:
         log.info('Received command: %s (id=%s)', command, cmd_id)
 
         if command == 'start_streaming':
-            rtmp_url = cmd.get('rtmpUrl', '')
+            rtmp_url = cmd.get('rtmpUrl', '') or self.cfg.get('rtmpUrl', '')
+            log.info('RTMP URL: %s', rtmp_url[:40] + '...' if len(rtmp_url) > 40 else rtmp_url)
             if rtmp_url:
                 self.start(rtmp_url)
             else:
-                log.warning('start_streaming missing rtmpUrl — check YouTube connection on server')
+                log.warning('No RTMP URL — set rtmpUrl in /etc/gs-agent/config.json or connect YouTube in app settings')
 
         elif command == 'stop_streaming':
             self.stop()

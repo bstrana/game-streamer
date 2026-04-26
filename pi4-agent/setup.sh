@@ -85,6 +85,12 @@ read -rp "Video bitrate kbps [2500]: " VIDEO_BITRATE
 VIDEO_BITRATE="${VIDEO_BITRATE:-2500}"
 
 echo ""
+echo "YouTube RTMP URL (optional — get from YouTube Studio → Go Live → Stream key):"
+echo "  Format: rtmp://a.rtmp.youtube.com/live2/YOUR-STREAM-KEY"
+echo "  Leave blank to have the app fetch it automatically via YouTube API."
+read -rp "RTMP URL [leave blank]: " RTMP_URL_CFG
+
+echo ""
 echo "Audio device (ALSA device name, or 'none' to stream without audio):"
 echo "  Examples: default  hw:0  hw:1  none"
 read -rp "Audio device [none]: " AUDIO_DEVICE
@@ -101,6 +107,7 @@ cat > /etc/gs-agent/config.json <<JSON
   "activeSource":  "$ACTIVE_SOURCE",
   "usbDevice":     "$USB_DEVICE",
   "rtspUrl":       "$RTSP_URL",
+  "rtmpUrl":       "$RTMP_URL_CFG",
   "resolution":    "$RESOLUTION",
   "framerate":     $FRAMERATE,
   "videoBitrate":  $VIDEO_BITRATE,
