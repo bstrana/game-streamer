@@ -114,21 +114,21 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # RTSP IP camera — audio comes from the stream itself
+            # RTSP IP camera already outputs H.264 — copy the stream directly
+            # to RTMP without re-encoding. Avoids pixel format issues and is
+            # much lighter on the Pi4 (no transcoding).
             rtsp_url = cfg.get('rtspUrl', '')
             cmd = [
-                'ffmpeg', '-re',
+                'ffmpeg',
+                '-rtsp_transport', 'tcp',
                 '-i', rtsp_url,
-                '-c:v', encoder,
-                '-b:v', vbr,
-                '-s', f'{width}x{height}',
-                '-r', fps,
-                '-c:a', 'aac',
-                '-b:a', abr,
-                '-ar', '44100',
-                '-f', 'flv',
-                rtmp_url,
+                '-c:v', 'copy',
             ]
+            if has_audio:
+                cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
+            else:
+                cmd += ['-an']
+            cmd += ['-f', 'flv', rtmp_url]
         else:
             # V4L2 USB camera
             usb_dev = (
@@ -145,7 +145,7 @@ class StreamAgent:
             ]
             if has_audio:
                 cmd += ['-f', 'alsa', '-i', audio_dev]
-            cmd += ['-c:v', encoder, '-b:v', vbr]
+            cmd += ['-vf', 'format=yuv420p', '-c:v', encoder, '-b:v', vbr]
             if has_audio:
                 cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
             else:
