@@ -75,8 +75,8 @@ else
 fi
 
 echo ""
-read -rp "Resolution [1920x1080]: " RESOLUTION
-RESOLUTION="${RESOLUTION:-1920x1080}"
+read -rp "Resolution [1280x720]: " RESOLUTION
+RESOLUTION="${RESOLUTION:-1280x720}"
 
 read -rp "Framerate [25]: " FRAMERATE
 FRAMERATE="${FRAMERATE:-25}"

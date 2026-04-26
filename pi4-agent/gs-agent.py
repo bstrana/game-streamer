@@ -27,7 +27,7 @@ DEFAULT_CONFIG = {
     'usbDevice': '/dev/video0',
     'rtspUrl': '',
     'rtmpUrl': '',          # optional hard-coded RTMP URL override (incl. stream key)
-    'resolution': '1920x1080',
+    'resolution': '1280x720',
     'framerate': 25,
     'videoBitrate': 2500,
     'audioBitrate': 128,
@@ -115,24 +115,36 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # RTSP IP camera already outputs H.264 — copy stream to RTMP.
-            # +genpts:        generate missing timestamps (fixes FLV muxer warning)
-            # +discardcorrupt: drop corrupt packets instead of aborting
-            # -avoid_negative_ts: fix negative timestamp warnings for FLV
             rtsp_url = cfg.get('rtspUrl', '')
+            bitrate  = int(cfg.get('videoBitrate', 2500))
             cmd = [
                 'ffmpeg',
                 '-rtsp_transport', 'tcp',
                 '-fflags', '+genpts+discardcorrupt',
+                # silent audio source — YouTube ingest requires an audio stream
+                '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo',
                 '-i', rtsp_url,
-                '-c:v', 'copy',
-                '-avoid_negative_ts', 'make_zero',
+                '-map', '1:v:0',
+                '-map', '0:a:0',
+                '-vf', f'scale={width}:{height},format=yuv420p',
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',
+                '-tune', 'zerolatency',
+                '-profile:v', 'high',
+                '-level:v', '4.0',
+                '-b:v', vbr,
+                '-maxrate', vbr,
+                '-bufsize', f'{bitrate * 2}k',
+                '-r', fps,
+                '-g', str(int(cfg.get('framerate', 25)) * 2),
+                '-keyint_min', fps,
+                '-sc_threshold', '0',
+                '-c:a', 'aac',
+                '-b:a', '32k',
+                '-ar', '44100',
+                '-f', 'flv',
+                rtmp_url,
             ]
-            if has_audio:
-                cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
-            else:
-                cmd += ['-an']
-            cmd += ['-f', 'flv', rtmp_url]
         else:
             # V4L2 USB camera
             usb_dev = (
