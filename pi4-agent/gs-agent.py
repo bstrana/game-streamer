@@ -114,24 +114,21 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # RTSP IP camera — audio comes from the stream itself.
-            # scale+format filter normalises pixel format to yuv420p which
-            # h264_v4l2m2m requires (Hikvision decodes as yuvj420p otherwise).
+            # RTSP IP camera already outputs H.264 — copy the stream directly
+            # to RTMP without re-encoding. Avoids pixel format issues and is
+            # much lighter on the Pi4 (no transcoding).
             rtsp_url = cfg.get('rtspUrl', '')
             cmd = [
-                'ffmpeg', '-re',
+                'ffmpeg',
                 '-rtsp_transport', 'tcp',
                 '-i', rtsp_url,
-                '-vf', f'scale={width}:{height},format=yuv420p',
-                '-r', fps,
-                '-c:v', encoder,
-                '-b:v', vbr,
-                '-c:a', 'aac',
-                '-b:a', abr,
-                '-ar', '44100',
-                '-f', 'flv',
-                rtmp_url,
+                '-c:v', 'copy',
             ]
+            if has_audio:
+                cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
+            else:
+                cmd += ['-an']
+            cmd += ['-f', 'flv', rtmp_url]
         else:
             # V4L2 USB camera
             usb_dev = (
