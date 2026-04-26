@@ -610,7 +610,7 @@ export default function Dashboard() {
       {obsStatus && (
         <div className={`obs-bar ${obsStatus.connected ? (obsStatus.streaming ? 'obs-bar-live' : 'obs-bar-connected') : 'obs-bar-offline'}`}>
           <span className="obs-dot" />
-          <span className="obs-bar-label">OBS</span>
+          <span className="obs-bar-label">{obsStatus.agentType === 'pi4' ? 'Pi4' : 'OBS'}</span>
           {obsStatus.connected ? (
             <>
               {obsStatus.scenes?.length > 1 ? (

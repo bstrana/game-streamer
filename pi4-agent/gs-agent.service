@@ -1,0 +1,26 @@
+[Unit]
+Description=Game Streamer Pi4 Streaming Agent
+Documentation=https://github.com/bstrana/game-streamer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/gs-agent/gs-agent.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gs-agent
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/etc/gs-agent
+# Allow access to video devices
+DeviceAllow=char-video rw
+SupplementaryGroups=video
+
+[Install]
+WantedBy=multi-user.target
