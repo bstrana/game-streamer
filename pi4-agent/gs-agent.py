@@ -56,6 +56,7 @@ class StreamAgent:
         self._proc = None
         self._active_source = cfg.get('activeSource', cfg.get('usbDevice', '/dev/video0'))
         self._last_rtmp_url = ''
+        self._ffmpeg_cmd_used = []
         self._running = True
 
     # ── Source discovery ──────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ class StreamAgent:
         if self._proc is None:
             return False
         if self._proc.poll() is not None:
-            self._proc = None
+            self._check_ffmpeg_exit()
             return False
         return True
 
@@ -121,11 +122,13 @@ class StreamAgent:
                 'ffmpeg',
                 '-rtsp_transport', 'tcp',
                 '-fflags', '+genpts+discardcorrupt',
-                # silent audio source — YouTube ingest requires an audio stream
-                '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo',
+                '-thread_queue_size', '512',
                 '-i', rtsp_url,
-                '-map', '1:v:0',
-                '-map', '0:a:0',
+                '-f', 'lavfi',
+                '-thread_queue_size', '512',
+                '-i', 'aevalsrc=0:s=44100:c=stereo',
+                '-map', '0:v:0',
+                '-map', '1:a:0',
                 '-vf', f'scale={width}:{height},format=yuv420p',
                 '-c:v', 'libx264',
                 '-preset', 'ultrafast',
@@ -186,6 +189,23 @@ class StreamAgent:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
+        self._ffmpeg_cmd_used = cmd
+
+    def _check_ffmpeg_exit(self):
+        """Log FFmpeg output if process exited unexpectedly."""
+        if self._proc and self._proc.poll() is not None:
+            out = b''
+            try:
+                out = self._proc.stdout.read(4096)
+            except Exception:
+                pass
+            code = self._proc.returncode
+            if code not in (0, -15, -2):  # not clean exit or SIGTERM/SIGINT
+                log.error('FFmpeg exited with code %d', code)
+                if out:
+                    for line in out.decode(errors='replace').splitlines()[-20:]:
+                        log.error('ffmpeg: %s', line)
+            self._proc = None
 
     def stop(self):
         if not self._proc:
