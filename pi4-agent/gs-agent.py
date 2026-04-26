@@ -6,11 +6,13 @@ streaming via USB or RTSP camera, and executes remote commands from the
 dashboard (start, stop, switch scene).
 """
 
+import fcntl
 import glob
 import json
 import logging
 import os
 import signal
+import struct
 import subprocess
 import sys
 import time
@@ -57,8 +59,29 @@ class StreamAgent:
 
     # ── Source discovery ──────────────────────────────────────────────────────
 
+    @staticmethod
+    def _is_capture_device(path):
+        """Return True only if the V4L2 node supports video capture.
+
+        Pi4 creates many /dev/video* nodes for its codec and ISP pipeline;
+        VIDIOC_QUERYCAP filters those out so we only list real cameras.
+        """
+        VIDIOC_QUERYCAP      = 0x80685600  # _IOR('V', 0, v4l2_capability)
+        V4L2_CAP_VIDEO_CAPTURE = 0x00000001
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+            try:
+                buf    = fcntl.ioctl(fd, VIDIOC_QUERYCAP, b'\x00' * 104)
+                caps   = struct.unpack_from('<I', buf, 84)[0]
+                return bool(caps & V4L2_CAP_VIDEO_CAPTURE)
+            finally:
+                os.close(fd)
+        except Exception:
+            return False
+
     def _usb_devices(self):
-        return sorted(glob.glob('/dev/video[0-9]*'))
+        return [d for d in sorted(glob.glob('/dev/video[0-9]*'))
+                if self._is_capture_device(d)]
 
     def scenes(self):
         sources = list(self._usb_devices())
