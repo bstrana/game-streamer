@@ -35,6 +35,76 @@ DEFAULT_CONFIG = {
     'videoEncoder': 'h264_v4l2m2m',
 }
 
+CHROMA_GREEN = '0x00FF00'  # must match ?chromakey=1 background in Overlay.jsx
+
+
+def _find_chromium():
+    for name in ('chromium-browser', 'chromium'):
+        try:
+            subprocess.run(['which', name], check=True, capture_output=True)
+            return name
+        except subprocess.CalledProcessError:
+            continue
+    return None
+
+
+class OverlayRenderer:
+    """Renders the score overlay in a headless X display for FFmpeg compositing."""
+
+    DISPLAY = ':99'
+
+    def __init__(self):
+        self._xvfb    = None
+        self._browser = None
+
+    def start(self, overlay_url, resolution):
+        self.stop()
+        w, h = resolution.split('x')
+        self._xvfb = subprocess.Popen(
+            ['Xvfb', self.DISPLAY, '-screen', '0', f'{w}x{h}x24', '-ac'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        time.sleep(1)
+
+        browser = _find_chromium()
+        if not browser:
+            log.warning('chromium not found — overlay disabled. Install chromium-browser.')
+            return
+
+        env = {**os.environ, 'DISPLAY': self.DISPLAY, 'HOME': '/tmp'}
+        self._browser = subprocess.Popen(
+            [
+                browser,
+                '--no-sandbox', '--disable-gpu',
+                '--disable-software-rasterizer',
+                '--disable-dev-shm-usage',
+                f'--window-size={w},{h}',
+                '--window-position=0,0',
+                '--noerrdialogs', '--disable-infobars',
+                '--disable-extensions', '--disable-translate',
+                '--app', overlay_url,
+            ],
+            env=env,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        time.sleep(3)  # allow page to load before FFmpeg starts grabbing
+        log.info('Overlay renderer started on %s', self.DISPLAY)
+
+    def stop(self):
+        for proc in (self._browser, self._xvfb):
+            if proc:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+        self._browser = None
+        self._xvfb    = None
+
+    def running(self):
+        return self._xvfb is not None and self._xvfb.poll() is None
+
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [gs-agent] %(levelname)s %(message)s',
@@ -56,7 +126,9 @@ class StreamAgent:
         self._proc = None
         self._active_source = cfg.get('activeSource', cfg.get('usbDevice', '/dev/video0'))
         self._last_rtmp_url = ''
+        self._last_overlay_url = ''
         self._ffmpeg_cmd_used = []
+        self._overlay = OverlayRenderer()
         self._running = True
 
     # ── Source discovery ──────────────────────────────────────────────────────
@@ -118,18 +190,9 @@ class StreamAgent:
         if self._active_source == 'IP Camera':
             rtsp_url = cfg.get('rtspUrl', '')
             bitrate  = int(cfg.get('videoBitrate', 2500))
-            cmd = [
-                'ffmpeg',
-                '-rtsp_transport', 'tcp',
-                '-fflags', '+genpts+discardcorrupt',
-                '-thread_queue_size', '512',
-                '-i', rtsp_url,
-                '-f', 'lavfi',
-                '-thread_queue_size', '512',
-                '-i', 'aevalsrc=0:s=44100:c=stereo',
-                '-map', '0:v:0',
-                '-map', '1:a:0',
-                '-vf', f'scale={width}:{height},format=yuv420p',
+            use_overlay = self._overlay.running()
+
+            encode_args = [
                 '-c:v', 'libx264',
                 '-preset', 'ultrafast',
                 '-tune', 'zerolatency',
@@ -142,12 +205,53 @@ class StreamAgent:
                 '-g', str(int(cfg.get('framerate', 25)) * 2),
                 '-keyint_min', fps,
                 '-sc_threshold', '0',
-                '-c:a', 'aac',
-                '-b:a', '32k',
-                '-ar', '44100',
-                '-f', 'flv',
-                rtmp_url,
+                '-c:a', 'aac', '-b:a', '32k', '-ar', '44100',
+                '-f', 'flv', rtmp_url,
             ]
+
+            if use_overlay:
+                # 3-input pipeline:
+                #   0 = RTSP camera
+                #   1 = x11grab (Xvfb running Chromium with overlay page)
+                #   2 = silent audio
+                # colorkey removes the green chroma background from the overlay
+                fc = (
+                    f'[0:v]scale={width}:{height},format=yuv420p[cam];'
+                    f'[1:v]colorkey={CHROMA_GREEN}:0.3:0.1[ovl];'
+                    f'[cam][ovl]overlay=0:0[out]'
+                )
+                cmd = [
+                    'ffmpeg',
+                    '-rtsp_transport', 'tcp',
+                    '-fflags', '+genpts+discardcorrupt',
+                    '-thread_queue_size', '512',
+                    '-i', rtsp_url,
+                    '-f', 'x11grab',
+                    '-video_size', f'{width}x{height}',
+                    '-framerate', '5',
+                    '-thread_queue_size', '512',
+                    '-i', f'{OverlayRenderer.DISPLAY}.0',
+                    '-f', 'lavfi',
+                    '-thread_queue_size', '512',
+                    '-i', 'aevalsrc=0:s=44100:c=stereo',
+                    '-filter_complex', fc,
+                    '-map', '[out]',
+                    '-map', '2:a:0',
+                ] + encode_args
+            else:
+                cmd = [
+                    'ffmpeg',
+                    '-rtsp_transport', 'tcp',
+                    '-fflags', '+genpts+discardcorrupt',
+                    '-thread_queue_size', '512',
+                    '-i', rtsp_url,
+                    '-f', 'lavfi',
+                    '-thread_queue_size', '512',
+                    '-i', 'aevalsrc=0:s=44100:c=stereo',
+                    '-map', '0:v:0',
+                    '-map', '1:a:0',
+                    '-vf', f'scale={width}:{height},format=yuv420p',
+                ] + encode_args
         else:
             # V4L2 USB camera
             usb_dev = (
@@ -173,14 +277,18 @@ class StreamAgent:
 
         return cmd
 
-    def start(self, rtmp_url):
+    def start(self, rtmp_url, overlay_url=''):
         if self.streaming():
             log.info('Already streaming — ignoring start command')
             return
         if not rtmp_url:
             log.warning('start called with empty RTMP URL')
             return
-        self._last_rtmp_url = rtmp_url
+        self._last_rtmp_url    = rtmp_url
+        self._last_overlay_url = overlay_url
+        if overlay_url:
+            log.info('Starting overlay renderer...')
+            self._overlay.start(overlay_url, self.cfg.get('resolution', '1280x720'))
         cmd = self._ffmpeg_cmd(rtmp_url)
         log.info('Starting FFmpeg: %s', ' '.join(cmd))
         self._proc = subprocess.Popen(
@@ -218,6 +326,7 @@ class StreamAgent:
             self._proc.kill()
             self._proc.wait()
         self._proc = None
+        self._overlay.stop()
 
     def switch_source(self, scene_name):
         was_streaming = self.streaming()
@@ -225,7 +334,7 @@ class StreamAgent:
         self._active_source = scene_name
         log.info('Switched source to: %s', scene_name)
         if was_streaming and self._last_rtmp_url:
-            self.start(self._last_rtmp_url)
+            self.start(self._last_rtmp_url, self._last_overlay_url)
 
     # ── Heartbeat & command polling ───────────────────────────────────────────
 
@@ -265,10 +374,13 @@ class StreamAgent:
         log.info('Received command: %s (id=%s)', command, cmd_id)
 
         if command == 'start_streaming':
-            rtmp_url = cmd.get('rtmpUrl', '') or self.cfg.get('rtmpUrl', '')
+            rtmp_url    = cmd.get('rtmpUrl', '') or self.cfg.get('rtmpUrl', '')
+            overlay_url = cmd.get('overlayUrl', '')
             log.info('RTMP URL: %s', rtmp_url[:40] + '...' if len(rtmp_url) > 40 else rtmp_url)
+            if overlay_url:
+                log.info('Overlay URL: %s', overlay_url)
             if rtmp_url:
-                self.start(rtmp_url)
+                self.start(rtmp_url, overlay_url)
             else:
                 log.warning('No RTMP URL — set rtmpUrl in /etc/gs-agent/config.json or connect YouTube in app settings')
 

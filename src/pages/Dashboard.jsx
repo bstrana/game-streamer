@@ -667,7 +667,7 @@ export default function Dashboard() {
               obsConnected={obsStatus?.connected || false}
               obsStreaming={obsStatus?.streaming || false}
               obsLoading={obsLoading}
-              onObsStart={(broadcastId) => handleObsCommand('start_streaming', { broadcastId })}
+              onObsStart={(broadcastId) => handleObsCommand('start_streaming', { broadcastId, matchId: m.id })}
             />
           ))}
         </div>

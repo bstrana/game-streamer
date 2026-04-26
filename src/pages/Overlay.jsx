@@ -1,24 +1,27 @@
-/**
- * Overlay page — publicly accessible, no Keycloak auth.
- * Intended as an OBS browser source URL.
- *
- * Route: /overlay/:matchId
- *
- * - Loads match data from the server API (works in OBS browser source)
- * - Polls the API every 10 s so live edits (replay toggle, gameId, colors)
- *   are picked up without reloading the OBS source
- * - Polls WBSC live game data every 10 s when a gameId is set
- */
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import Scoreboard from '../components/Scoreboard';
 import { getMatch } from '../stores/matchStore';
 import { useGameData } from '../hooks/useGameData';
 
 export default function Overlay() {
   const { matchId } = useParams();
+  const [searchParams] = useSearchParams();
   const [match, setMatch] = useState(null);
   const [notFound, setNotFound] = useState(false);
+
+  // chromakey=1 → solid green background so FFmpeg colorkey can composite
+  // onto the Pi4 camera feed. Has no effect in OBS (OBS ignores body bg).
+  useEffect(() => {
+    if (searchParams.get('chromakey') === '1') {
+      document.documentElement.style.background = '#00ff00';
+      document.body.style.background = '#00ff00';
+    }
+    return () => {
+      document.documentElement.style.background = '';
+      document.body.style.background = '';
+    };
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +38,6 @@ export default function Overlay() {
     }
 
     load();
-    // Poll every 10 s — picks up edits made in the management UI
     const timer = setInterval(load, 10_000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [matchId]);
@@ -69,3 +71,4 @@ export default function Overlay() {
     </div>
   );
 }
+
