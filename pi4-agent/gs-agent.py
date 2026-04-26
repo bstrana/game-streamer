@@ -27,7 +27,7 @@ DEFAULT_CONFIG = {
     'usbDevice': '/dev/video0',
     'rtspUrl': '',
     'rtmpUrl': '',          # optional hard-coded RTMP URL override (incl. stream key)
-    'resolution': '1920x1080',
+    'resolution': '1280x720',
     'framerate': 25,
     'videoBitrate': 2500,
     'audioBitrate': 128,
