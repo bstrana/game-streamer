@@ -115,8 +115,8 @@ chmod 600 /etc/gs-agent/config.json
 echo "[5/5] Installing agent and enabling service..."
 mkdir -p "$INSTALL_DIR"
 
-# Use local files if running from a cloned repo, otherwise download from GitHub
-if [[ -f "$SCRIPT_DIR/gs-agent.py" ]]; then
+# Use local files if running from a cloned repo (both files present), otherwise download
+if [[ -f "$SCRIPT_DIR/gs-agent.py" && -f "$SCRIPT_DIR/gs-agent.service" ]]; then
   cp "$SCRIPT_DIR/gs-agent.py"      "$INSTALL_DIR/gs-agent.py"
   cp "$SCRIPT_DIR/gs-agent.service" /etc/systemd/system/gs-agent.service
 else
