@@ -383,7 +383,7 @@ function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected
               ▶ YouTube
             </button>
           )}
-          {(obsConnected || obsStatus) && !obsStreaming && (
+          {!obsStreaming && (
             <button
               className="btn btn-sm btn-live"
               disabled={obsLoading || !obsConnected}
