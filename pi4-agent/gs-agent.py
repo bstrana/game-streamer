@@ -26,6 +26,7 @@ DEFAULT_CONFIG = {
     'activeSource': 'usb',
     'usbDevice': '/dev/video0',
     'rtspUrl': '',
+    'rtmpUrl': '',          # optional hard-coded RTMP URL override (incl. stream key)
     'resolution': '1920x1080',
     'framerate': 25,
     'videoBitrate': 2500,
@@ -229,11 +230,12 @@ class StreamAgent:
         log.info('Received command: %s (id=%s)', command, cmd_id)
 
         if command == 'start_streaming':
-            rtmp_url = cmd.get('rtmpUrl', '')
+            rtmp_url = cmd.get('rtmpUrl', '') or self.cfg.get('rtmpUrl', '')
+            log.info('RTMP URL: %s', rtmp_url[:40] + '...' if len(rtmp_url) > 40 else rtmp_url)
             if rtmp_url:
                 self.start(rtmp_url)
             else:
-                log.warning('start_streaming missing rtmpUrl — check YouTube connection on server')
+                log.warning('No RTMP URL — set rtmpUrl in /etc/gs-agent/config.json or connect YouTube in app settings')
 
         elif command == 'stop_streaming':
             self.stop()
