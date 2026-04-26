@@ -114,15 +114,18 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # RTSP IP camera — audio comes from the stream itself
+            # RTSP IP camera — audio comes from the stream itself.
+            # scale+format filter normalises pixel format to yuv420p which
+            # h264_v4l2m2m requires (Hikvision decodes as yuvj420p otherwise).
             rtsp_url = cfg.get('rtspUrl', '')
             cmd = [
                 'ffmpeg', '-re',
+                '-rtsp_transport', 'tcp',
                 '-i', rtsp_url,
+                '-vf', f'scale={width}:{height},format=yuv420p',
+                '-r', fps,
                 '-c:v', encoder,
                 '-b:v', vbr,
-                '-s', f'{width}x{height}',
-                '-r', fps,
                 '-c:a', 'aac',
                 '-b:a', abr,
                 '-ar', '44100',
@@ -145,7 +148,7 @@ class StreamAgent:
             ]
             if has_audio:
                 cmd += ['-f', 'alsa', '-i', audio_dev]
-            cmd += ['-c:v', encoder, '-b:v', vbr]
+            cmd += ['-vf', 'format=yuv420p', '-c:v', encoder, '-b:v', vbr]
             if has_audio:
                 cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
             else:
