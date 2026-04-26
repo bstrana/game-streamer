@@ -115,18 +115,25 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # RTSP IP camera already outputs H.264 — copy stream to RTMP.
-            # +genpts:        generate missing timestamps (fixes FLV muxer warning)
-            # +discardcorrupt: drop corrupt packets instead of aborting
-            # -avoid_negative_ts: fix negative timestamp warnings for FLV
+            # Transcode RTSP to clean H.264 for YouTube compatibility.
+            # Stream copy fails because Hikvision uses non-standard NAL types
+            # (FMO, extended profiles) that YouTube's ingest server rejects.
+            # libx264 ultrafast+zerolatency gives the best real-time performance
+            # on Pi4; h264_v4l2m2m has pixel format issues with RTSP input.
             rtsp_url = cfg.get('rtspUrl', '')
             cmd = [
                 'ffmpeg',
                 '-rtsp_transport', 'tcp',
                 '-fflags', '+genpts+discardcorrupt',
                 '-i', rtsp_url,
-                '-c:v', 'copy',
-                '-avoid_negative_ts', 'make_zero',
+                '-vf', f'scale={width}:{height},format=yuv420p',
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',
+                '-tune', 'zerolatency',
+                '-b:v', vbr,
+                '-r', fps,
+                '-g', str(int(cfg.get('framerate', 25)) * 2),
+                '-keyint_min', fps,
             ]
             if has_audio:
                 cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
