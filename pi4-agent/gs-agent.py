@@ -115,31 +115,36 @@ class StreamAgent:
         has_audio = bool(audio_dev and audio_dev not in ('', 'none'))
 
         if self._active_source == 'IP Camera':
-            # Transcode RTSP to clean H.264 for YouTube compatibility.
-            # Stream copy fails because Hikvision uses non-standard NAL types
-            # (FMO, extended profiles) that YouTube's ingest server rejects.
-            # libx264 ultrafast+zerolatency gives the best real-time performance
-            # on Pi4; h264_v4l2m2m has pixel format issues with RTSP input.
             rtsp_url = cfg.get('rtspUrl', '')
+            bitrate  = int(cfg.get('videoBitrate', 2500))
             cmd = [
                 'ffmpeg',
                 '-rtsp_transport', 'tcp',
                 '-fflags', '+genpts+discardcorrupt',
+                # silent audio source — YouTube ingest requires an audio stream
+                '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo',
                 '-i', rtsp_url,
+                '-map', '1:v:0',
+                '-map', '0:a:0',
                 '-vf', f'scale={width}:{height},format=yuv420p',
                 '-c:v', 'libx264',
                 '-preset', 'ultrafast',
                 '-tune', 'zerolatency',
+                '-profile:v', 'high',
+                '-level:v', '4.0',
                 '-b:v', vbr,
+                '-maxrate', vbr,
+                '-bufsize', f'{bitrate * 2}k',
                 '-r', fps,
                 '-g', str(int(cfg.get('framerate', 25)) * 2),
                 '-keyint_min', fps,
+                '-sc_threshold', '0',
+                '-c:a', 'aac',
+                '-b:a', '32k',
+                '-ar', '44100',
+                '-f', 'flv',
+                rtmp_url,
             ]
-            if has_audio:
-                cmd += ['-c:a', 'aac', '-b:a', abr, '-ar', '44100']
-            else:
-                cmd += ['-an']
-            cmd += ['-f', 'flv', rtmp_url]
         else:
             # V4L2 USB camera
             usb_dev = (
