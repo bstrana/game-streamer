@@ -75,11 +75,11 @@ else
 fi
 
 echo ""
-read -rp "Resolution [1280x720]: " RESOLUTION
-RESOLUTION="${RESOLUTION:-1280x720}"
+read -rp "Resolution [1920x1080]: " RESOLUTION
+RESOLUTION="${RESOLUTION:-1920x1080}"
 
-read -rp "Framerate [30]: " FRAMERATE
-FRAMERATE="${FRAMERATE:-30}"
+read -rp "Framerate [25]: " FRAMERATE
+FRAMERATE="${FRAMERATE:-25}"
 
 read -rp "Video bitrate kbps [2500]: " VIDEO_BITRATE
 VIDEO_BITRATE="${VIDEO_BITRATE:-2500}"
@@ -87,8 +87,8 @@ VIDEO_BITRATE="${VIDEO_BITRATE:-2500}"
 echo ""
 echo "Audio device (ALSA device name, or 'none' to stream without audio):"
 echo "  Examples: default  hw:0  hw:1  none"
-read -rp "Audio device [default]: " AUDIO_DEVICE
-AUDIO_DEVICE="${AUDIO_DEVICE:-default}"
+read -rp "Audio device [none]: " AUDIO_DEVICE
+AUDIO_DEVICE="${AUDIO_DEVICE:-none}"
 
 # ── Write config ──────────────────────────────────────────────────────────────
 echo ""

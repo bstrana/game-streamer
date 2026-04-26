@@ -26,11 +26,11 @@ DEFAULT_CONFIG = {
     'activeSource': 'usb',
     'usbDevice': '/dev/video0',
     'rtspUrl': '',
-    'resolution': '1280x720',
-    'framerate': 30,
+    'resolution': '1920x1080',
+    'framerate': 25,
     'videoBitrate': 2500,
     'audioBitrate': 128,
-    'audioDevice': 'default',
+    'audioDevice': 'none',
     'videoEncoder': 'h264_v4l2m2m',
 }
 
