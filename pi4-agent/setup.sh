@@ -2,6 +2,9 @@
 # Game Streamer – Raspberry Pi 4 agent one-time setup
 set -euo pipefail
 
+REPO_RAW="https://raw.githubusercontent.com/bstrana/game-streamer/main/pi4-agent"
+INSTALL_DIR="/usr/local/lib/gs-agent"
+
 echo "========================================"
 echo "  Game Streamer Pi4 Agent Setup"
 echo "========================================"
@@ -18,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ── Install system dependencies ───────────────────────────────────────────────
 echo "[1/5] Installing dependencies (ffmpeg, v4l-utils, python3)..."
 apt-get update -qq
-apt-get install -y ffmpeg v4l-utils python3
+apt-get install -y ffmpeg v4l-utils python3 curl
 
 # ── Detect cameras ────────────────────────────────────────────────────────────
 echo ""
@@ -72,11 +75,11 @@ else
 fi
 
 echo ""
-read -rp "Resolution [1280x720]: " RESOLUTION
-RESOLUTION="${RESOLUTION:-1280x720}"
+read -rp "Resolution [1920x1080]: " RESOLUTION
+RESOLUTION="${RESOLUTION:-1920x1080}"
 
-read -rp "Framerate [30]: " FRAMERATE
-FRAMERATE="${FRAMERATE:-30}"
+read -rp "Framerate [25]: " FRAMERATE
+FRAMERATE="${FRAMERATE:-25}"
 
 read -rp "Video bitrate kbps [2500]: " VIDEO_BITRATE
 VIDEO_BITRATE="${VIDEO_BITRATE:-2500}"
@@ -84,8 +87,8 @@ VIDEO_BITRATE="${VIDEO_BITRATE:-2500}"
 echo ""
 echo "Audio device (ALSA device name, or 'none' to stream without audio):"
 echo "  Examples: default  hw:0  hw:1  none"
-read -rp "Audio device [default]: " AUDIO_DEVICE
-AUDIO_DEVICE="${AUDIO_DEVICE:-default}"
+read -rp "Audio device [none]: " AUDIO_DEVICE
+AUDIO_DEVICE="${AUDIO_DEVICE:-none}"
 
 # ── Write config ──────────────────────────────────────────────────────────────
 echo ""
@@ -108,16 +111,22 @@ cat > /etc/gs-agent/config.json <<JSON
 JSON
 chmod 600 /etc/gs-agent/config.json
 
-# ── Install agent ─────────────────────────────────────────────────────────────
-INSTALL_DIR="/usr/local/lib/gs-agent"
+# ── Install agent files ───────────────────────────────────────────────────────
+echo "[5/5] Installing agent and enabling service..."
 mkdir -p "$INSTALL_DIR"
-cp "$SCRIPT_DIR/gs-agent.py" "$INSTALL_DIR/gs-agent.py"
+
+# Use local files if running from a cloned repo (both files present), otherwise download
+if [[ -f "$SCRIPT_DIR/gs-agent.py" && -f "$SCRIPT_DIR/gs-agent.service" ]]; then
+  cp "$SCRIPT_DIR/gs-agent.py"      "$INSTALL_DIR/gs-agent.py"
+  cp "$SCRIPT_DIR/gs-agent.service" /etc/systemd/system/gs-agent.service
+else
+  echo "  Downloading from GitHub..."
+  curl -fsSL "$REPO_RAW/gs-agent.py"      -o "$INSTALL_DIR/gs-agent.py"
+  curl -fsSL "$REPO_RAW/gs-agent.service" -o /etc/systemd/system/gs-agent.service
+fi
 chmod 755 "$INSTALL_DIR/gs-agent.py"
 
-cp "$SCRIPT_DIR/gs-agent.service" /etc/systemd/system/gs-agent.service
-
 # ── Enable and start service ──────────────────────────────────────────────────
-echo "[5/5] Enabling and starting gs-agent service..."
 systemctl daemon-reload
 systemctl enable gs-agent
 systemctl restart gs-agent
@@ -130,6 +139,9 @@ echo ""
 echo "  Status : systemctl status gs-agent"
 echo "  Logs   : journalctl -u gs-agent -f"
 echo "  Config : /etc/gs-agent/config.json"
+echo ""
+echo "  Update agent anytime:"
+echo "  sudo curl -fsSL $REPO_RAW/gs-agent.py -o $INSTALL_DIR/gs-agent.py && sudo systemctl restart gs-agent"
 echo ""
 echo "Turn on the Pi4 at the field — the agent will appear as connected"
 echo "in the Game Streamer dashboard (OBS bar shows 'Pi4')."
