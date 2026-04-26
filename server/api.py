@@ -294,6 +294,20 @@ def _yt(path, method='GET', body=None, token=None):
         return json.loads(resp.read())
 
 
+def _get_persistent_rtmp_url(token):
+    """Return the RTMP ingest URL for the user's first persistent YouTube stream key."""
+    data = _yt('/liveStreams?part=cdn&mine=true&maxResults=1', token=token)
+    items = data.get('items', [])
+    if not items:
+        raise ValueError('No persistent stream key found — create one in YouTube Studio first')
+    ingestion = items[0].get('cdn', {}).get('ingestionInfo', {})
+    address = ingestion.get('ingestionAddress', '')
+    name    = ingestion.get('streamName', '')
+    if not address or not name:
+        raise ValueError('Persistent stream has no ingestion URL')
+    return f'{address}/{name}'
+
+
 def _get_rtmp_url(broadcast_id, token):
     """Return the RTMP ingest URL (address/streamName) for a YouTube broadcast."""
     broadcast_data = _yt(
@@ -591,11 +605,14 @@ class Handler(BaseHTTPRequestHandler):
                 cmd['broadcastId'] = broadcast_id
             if scene:
                 cmd['scene'] = scene
-            if command == 'start_streaming' and broadcast_id:
+            if command == 'start_streaming':
                 try:
                     token = _get_access_token()
                     if token:
-                        cmd['rtmpUrl'] = _get_rtmp_url(broadcast_id, token)
+                        if broadcast_id:
+                            cmd['rtmpUrl'] = _get_rtmp_url(broadcast_id, token)
+                        else:
+                            cmd['rtmpUrl'] = _get_persistent_rtmp_url(token)
                 except Exception:
                     pass  # best-effort; Pi4 agent will log if missing
             _save_obs_command(cmd)
