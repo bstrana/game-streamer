@@ -294,6 +294,33 @@ def _yt(path, method='GET', body=None, token=None):
         return json.loads(resp.read())
 
 
+def _get_rtmp_url(broadcast_id, token):
+    """Return the RTMP ingest URL (address/streamName) for a YouTube broadcast."""
+    broadcast_data = _yt(
+        f'/liveBroadcasts?part=contentDetails&id={urllib.parse.quote(broadcast_id)}',
+        token=token,
+    )
+    items = broadcast_data.get('items', [])
+    if not items:
+        raise ValueError('Broadcast not found')
+    bound_stream_id = items[0].get('contentDetails', {}).get('boundStreamId', '')
+    if not bound_stream_id:
+        raise ValueError('Broadcast has no bound stream')
+    stream_data = _yt(
+        f'/liveStreams?part=cdn&id={urllib.parse.quote(bound_stream_id)}',
+        token=token,
+    )
+    stream_items = stream_data.get('items', [])
+    if not stream_items:
+        raise ValueError('Stream not found')
+    ingestion = stream_items[0].get('cdn', {}).get('ingestionInfo', {})
+    address = ingestion.get('ingestionAddress', '')
+    name    = ingestion.get('streamName', '')
+    if not address or not name:
+        raise ValueError('Stream has no ingestion URL')
+    return f'{address}/{name}'
+
+
 def _upload_thumbnail(broadcast_id, thumbnail_url, token):
     _assert_safe_url(thumbnail_url)
     parsed = urllib.parse.urlparse(thumbnail_url)
@@ -503,6 +530,7 @@ class Handler(BaseHTTPRequestHandler):
             'recording':      status.get('recording', False),
             'scene':          status.get('scene', ''),
             'scenes':         status.get('scenes', []),
+            'agentType':      status.get('agentType', ''),
             'updatedAt':      status.get('updatedAt'),
             'pendingCommand': command if command.get('id') else None,
         })
@@ -518,11 +546,13 @@ class Handler(BaseHTTPRequestHandler):
                 [str(s)[:200] for s in raw_scenes if isinstance(s, str)][:50]
                 if isinstance(raw_scenes, list) else []
             )
+            agent_type = str(body.get('agentType', ''))[:20]
             status = {
                 'streaming': bool(body.get('streaming', False)),
                 'recording': bool(body.get('recording', False)),
                 'scene':     str(body.get('scene', ''))[:200],
                 'scenes':    scenes,
+                'agentType': agent_type,
                 'updatedAt': _now_iso(),
             }
             _save_obs_status(status)
@@ -561,6 +591,13 @@ class Handler(BaseHTTPRequestHandler):
                 cmd['broadcastId'] = broadcast_id
             if scene:
                 cmd['scene'] = scene
+            if command == 'start_streaming' and broadcast_id:
+                try:
+                    token = _get_access_token()
+                    if token:
+                        cmd['rtmpUrl'] = _get_rtmp_url(broadcast_id, token)
+                except Exception:
+                    pass  # best-effort; Pi4 agent will log if missing
             _save_obs_command(cmd)
             self._json(200, {'ok': True, 'commandId': cmd['id']})
         except (json.JSONDecodeError, ValueError) as exc:
