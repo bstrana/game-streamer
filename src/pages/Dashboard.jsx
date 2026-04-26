@@ -383,15 +383,17 @@ function MatchRow({ match, onDelete, onDuplicate, onScheduleYouTube, ytConnected
               ▶ YouTube
             </button>
           )}
-          {match.broadcastId && obsConnected && !obsStreaming && (
-            <button
-              className="btn btn-sm btn-live"
-              disabled={obsLoading}
-              onClick={() => onObsStart(match.broadcastId)}
-              title="Start OBS stream for this broadcast"
-            >
-              ▶ Stream
-            </button>
+          {match.broadcastId && (
+            obsStreaming ? null : (
+              <button
+                className="btn btn-sm btn-live"
+                disabled={obsLoading || !obsConnected}
+                onClick={() => onObsStart(match.broadcastId)}
+                title={obsConnected ? 'Start stream on connected agent' : 'No streaming agent connected — open OBS with the script loaded, or start the Pi4 agent'}
+              >
+                ▶ Stream
+              </button>
+            )
           )}
           <button className="btn btn-sm btn-danger" onClick={handleDelete}>Delete</button>
         </div>
