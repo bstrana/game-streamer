@@ -859,6 +859,8 @@ class Handler(BaseHTTPRequestHandler):
                 description    = body.get('description', '')
                 privacy        = body.get('privacy', 'unlisted')
                 thumbnail_url  = body.get('thumbnailUrl', '')
+                auto_start     = bool(body.get('autoStart', True))
+                auto_stop      = bool(body.get('autoStop', True))
 
                 if not scheduled_time:
                     self._json(400, {'error': 'scheduledStartTime is required'})
@@ -875,8 +877,8 @@ class Handler(BaseHTTPRequestHandler):
                         'privacyStatus': privacy,
                     },
                     'contentDetails': {
-                        'enableAutoStart': False,
-                        'enableAutoStop':  False,
+                        'enableAutoStart': auto_start,
+                        'enableAutoStop':  auto_stop,
                         'monitorStream':   {'enableMonitorStream': False},
                     },
                 }).encode()
