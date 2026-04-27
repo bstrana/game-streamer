@@ -87,6 +87,8 @@ function ScheduleModal({ match, onClose, onScheduled }) {
   const [privacy, setPrivacy]       = useState('unlisted');
   const [description, setDesc]      = useState(match.streamDescription || buildDescription(match));
   const [thumbnailUrl, setThumbUrl] = useState('');
+  const [autoStart, setAutoStart]   = useState(true);
+  const [autoStop, setAutoStop]     = useState(true);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
   const [result, setResult]         = useState(null);
@@ -104,6 +106,8 @@ function ScheduleModal({ match, onClose, onScheduled }) {
           scheduledStartTime: iso,
           description,
           privacy,
+          autoStart,
+          autoStop,
           thumbnailUrl: thumbnailUrl.trim() || undefined,
         }),
       });
@@ -155,9 +159,21 @@ function ScheduleModal({ match, onClose, onScheduled }) {
               <label className="form-label">Description</label>
               <textarea className="form-input" rows={5} style={{ resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 12 }} value={description} onChange={e => setDesc(e.target.value)} />
             </div>
-            <div className="form-group" style={{ marginBottom: 20 }}>
+            <div className="form-group" style={{ marginBottom: 14 }}>
               <label className="form-label">Thumbnail URL <span className="label-hint">(optional)</span></label>
               <input className="form-input" type="url" placeholder="https://…/thumbnail.jpg" value={thumbnailUrl} onChange={e => setThumbUrl(e.target.value)} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 6 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                <input type="checkbox" checked={autoStart} onChange={e => setAutoStart(e.target.checked)} />
+                <span style={{ fontSize: 13 }}>Auto-start <span className="label-hint">(go live automatically when ▶ Stream is pressed)</span></span>
+              </label>
+            </div>
+            <div className="form-group" style={{ marginBottom: 20 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                <input type="checkbox" checked={autoStop} onChange={e => setAutoStop(e.target.checked)} />
+                <span style={{ fontSize: 13 }}>Auto-end <span className="label-hint">(broadcast ends automatically when stream stops)</span></span>
+              </label>
             </div>
             {error && <p style={{ color: 'var(--danger)', marginBottom: 14, fontSize: 13 }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -177,6 +193,8 @@ function ScheduleModal({ match, onClose, onScheduled }) {
 
 function BulkScheduleModal({ matches, onClose, onScheduled }) {
   const [privacy, setPrivacy]   = useState('unlisted');
+  const [autoStart, setAutoStart] = useState(true);
+  const [autoStop, setAutoStop]   = useState(true);
   const [phase, setPhase]       = useState('confirm'); // 'confirm' | 'running' | 'done'
   const [results, setResults]   = useState([]);
 
@@ -196,6 +214,8 @@ function BulkScheduleModal({ matches, onClose, onScheduled }) {
             scheduledStartTime: new Date(match.time).toISOString(),
             description:        match.streamDescription || buildDescription(match),
             privacy,
+            autoStart,
+            autoStop,
           }),
         });
         const data = await r.json();
@@ -249,13 +269,25 @@ function BulkScheduleModal({ matches, onClose, onScheduled }) {
                       </div>
                     ))}
                   </div>
-                  <div className="form-group" style={{ marginBottom: 20 }}>
+                  <div className="form-group" style={{ marginBottom: 14 }}>
                     <label className="form-label">Privacy for all</label>
                     <select className="form-input" value={privacy} onChange={e => setPrivacy(e.target.value)}>
                       <option value="unlisted">Unlisted</option>
                       <option value="public">Public</option>
                       <option value="private">Private</option>
                     </select>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 6 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                      <input type="checkbox" checked={autoStart} onChange={e => setAutoStart(e.target.checked)} />
+                      <span style={{ fontSize: 13 }}>Auto-start when stream begins</span>
+                    </label>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 20 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                      <input type="checkbox" checked={autoStop} onChange={e => setAutoStop(e.target.checked)} />
+                      <span style={{ fontSize: 13 }}>Auto-end when stream stops</span>
+                    </label>
                   </div>
                 </>
               )}
