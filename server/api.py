@@ -597,9 +597,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             body = json.loads(self._body())
-            agent_id = str(body.get('agentId', 'obs'))[:40]
-            if not AGENT_ID_RE.match(agent_id):
-                agent_id = 'obs'
+            agent_id = str(body.get('agentId', ''))[:40].strip()
+            if not agent_id or not AGENT_ID_RE.match(agent_id):
+                # No agentId sent — use agentType as stable fallback key
+                agent_type_fb = str(body.get('agentType', 'obs'))[:20]
+                agent_id = agent_type_fb if AGENT_ID_RE.match(agent_type_fb) else 'obs'
             raw_scenes = body.get('scenes', [])
             scenes = (
                 [str(s)[:200] for s in raw_scenes if isinstance(s, str)][:50]
