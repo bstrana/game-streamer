@@ -654,7 +654,10 @@ class Handler(BaseHTTPRequestHandler):
                 if not target or target == agent_id:
                     _save_obs_command({})
                     command = {}
-            self._json(200, {'ok': True, 'pendingCommand': command if command.get('id') else None})
+            # Only surface command to the agent it is targeted at
+            cmd_target = command.get('targetAgent', '') if command.get('id') else ''
+            visible_command = command if (command.get('id') and (not cmd_target or cmd_target == agent_id)) else None
+            self._json(200, {'ok': True, 'pendingCommand': visible_command})
         except (json.JSONDecodeError, ValueError) as exc:
             self._json(400, {'error': str(exc)})
         except Exception:
