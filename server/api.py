@@ -600,12 +600,17 @@ class Handler(BaseHTTPRequestHandler):
             if command == 'switch_scene' and not scene:
                 self._json(400, {'error': 'scene is required for switch_scene'})
                 return
+            match_id = str(body.get('matchId', ''))[:36].strip()
+            if match_id and not re.match(r'^[0-9a-f-]{36}$', match_id):
+                match_id = ''
             cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
             if broadcast_id:
                 cmd['broadcastId'] = broadcast_id
             if scene:
                 cmd['scene'] = scene
             if command == 'start_streaming':
+                if match_id and APP_BASE_URL:
+                    cmd['overlayUrl'] = f'{APP_BASE_URL}/overlay/{match_id}?chromakey=1'
                 try:
                     token = _get_access_token()
                     if token:

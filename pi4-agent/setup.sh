@@ -19,9 +19,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ── Install system dependencies ───────────────────────────────────────────────
-echo "[1/5] Installing dependencies (ffmpeg, v4l-utils, python3)..."
+echo "[1/5] Installing dependencies..."
 apt-get update -qq
-apt-get install -y ffmpeg v4l-utils python3 curl
+apt-get install -y ffmpeg v4l-utils python3 curl xvfb
+# Chromium name differs between Pi OS versions
+apt-get install -y chromium-browser 2>/dev/null || apt-get install -y chromium || true
 
 # ── Detect cameras ────────────────────────────────────────────────────────────
 echo ""
