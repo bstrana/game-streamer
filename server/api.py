@@ -39,7 +39,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 DATA_DIR      = os.environ.get('APP_DATA', '/app/data')
 SETTINGS_DIR  = os.path.join(DATA_DIR, 'game-settings')
 MATCHES_FILE  = os.path.join(DATA_DIR, 'matches.json')
-TOKENS_FILE   = os.path.join(DATA_DIR, 'youtube-tokens.json')
+TOKENS_FILE          = os.path.join(DATA_DIR, 'youtube-tokens.json')
+SELECTED_STREAM_FILE = os.path.join(DATA_DIR, 'youtube-selected-stream.json')
 OBS_STATUS_FILE  = os.path.join(DATA_DIR, 'obs-status.json')
 OBS_AGENTS_FILE  = os.path.join(DATA_DIR, 'obs-agents.json')
 OBS_COMMAND_FILE = os.path.join(DATA_DIR, 'obs-command.json')
@@ -277,6 +278,20 @@ def _save_tokens(tokens):
         pass
 
 
+def _load_selected_stream():
+    if not os.path.exists(SELECTED_STREAM_FILE):
+        return ''
+    try:
+        with open(SELECTED_STREAM_FILE, encoding='utf-8') as f:
+            return json.load(f).get('streamKeyId', '')
+    except Exception:
+        return ''
+
+def _save_selected_stream(stream_key_id):
+    with open(SELECTED_STREAM_FILE, 'w', encoding='utf-8') as f:
+        json.dump({'streamKeyId': stream_key_id}, f)
+
+
 def _get_access_token():
     tokens = _load_tokens()
     if not tokens:
@@ -312,7 +327,18 @@ def _yt(path, method='GET', body=None, token=None):
 
 
 def _get_persistent_rtmp_url(token):
-    """Return the RTMP ingest URL for the user's first persistent YouTube stream key."""
+    """Return the RTMP ingest URL for the selected (or first) persistent YouTube stream key."""
+    selected_id = _load_selected_stream()
+    if selected_id:
+        data = _yt(f'/liveStreams?part=cdn&id={urllib.parse.quote(selected_id)}', token=token)
+        items = data.get('items', [])
+        if items:
+            ingestion = items[0].get('cdn', {}).get('ingestionInfo', {})
+            address = ingestion.get('ingestionAddress', '')
+            name    = ingestion.get('streamName', '')
+            if address and name:
+                return f'{address}/{name}'
+    # fallback to first available
     data = _yt('/liveStreams?part=cdn&mine=true&maxResults=1', token=token)
     items = data.get('items', [])
     if not items:
@@ -428,6 +454,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         if self.path == '/api/obs/status':
             self._obs_put()
+        elif self.path == '/api/youtube/stream-key':
+            self._yt_stream_key_put()
         elif self.path.startswith('/api/matches/'):
             self._matches_put()
         else:
@@ -684,6 +712,21 @@ class Handler(BaseHTTPRequestHandler):
             _log_exc('obs_command_post')
             self._json(500, {'error': 'Internal server error'})
 
+    def _yt_stream_key_put(self):
+        try:
+            body = json.loads(self._body())
+            stream_key_id = str(body.get('streamKeyId', '')).strip()
+            if stream_key_id and not re.match(r'^[A-Za-z0-9_\-]{1,64}$', stream_key_id):
+                self._json(400, {'error': 'Invalid streamKeyId'})
+                return
+            _save_selected_stream(stream_key_id)
+            self._json(200, {'ok': True})
+        except (json.JSONDecodeError, ValueError) as exc:
+            self._json(400, {'error': str(exc)})
+        except Exception:
+            _log_exc('stream_key_put')
+            self._json(500, {'error': 'Internal server error'})
+
     def _yt_delete_broadcast(self):
         try:
             body = json.loads(self._body())
@@ -775,6 +818,32 @@ class Handler(BaseHTTPRequestHandler):
                 'prompt':        'consent',
             })
             self._json(200, {'url': f'{GOOGLE_AUTH_URL}?{params}'})
+
+        elif self.path == '/api/youtube/stream-keys':
+            token = _get_access_token()
+            if not token:
+                self._json(401, {'error': 'YouTube not connected'})
+                return
+            try:
+                data = _yt('/liveStreams?part=id,snippet,cdn,status&mine=true&maxResults=50', token=token)
+                selected_id = _load_selected_stream()
+                keys = []
+                for item in data.get('items', []):
+                    ingestion = item.get('cdn', {}).get('ingestionInfo', {})
+                    stream_name = ingestion.get('streamName', '')
+                    keys.append({
+                        'id':               item['id'],
+                        'title':            item.get('snippet', {}).get('title', ''),
+                        'streamKeyPreview': stream_name[:4] + '…' if stream_name else '',
+                        'ingestionAddress': ingestion.get('ingestionAddress', ''),
+                        'status':           item.get('status', {}).get('streamStatus', 'unknown'),
+                    })
+                self._json(200, {'streamKeys': keys, 'selectedId': selected_id or (keys[0]['id'] if keys else '')})
+            except urllib.error.HTTPError as exc:
+                self._json(exc.code, {'error': exc.read().decode()})
+            except Exception:
+                _log_exc('stream-keys')
+                self._json(500, {'error': 'Internal server error'})
 
         elif self.path.startswith('/api/youtube/broadcast-status'):
             parsed = urllib.parse.urlparse(self.path)
@@ -888,16 +957,26 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 broadcast_id = broadcast['id']
 
-                # 2. Find persistent stream (fixed key)
-                streams = _yt(
-                    '/liveStreams?part=id,snippet&mine=true&maxResults=5',
-                    token=token,
-                )
-                items = streams.get('items', [])
-                if not items:
-                    self._json(400, {'error': 'No persistent stream key found. Create one in YouTube Studio first.'})
-                    return
-                stream_id = items[0]['id']
+                # 2. Find persistent stream — prefer selected key
+                selected_stream_id = _load_selected_stream()
+                stream_id = ''
+                if selected_stream_id:
+                    s = _yt(
+                        f'/liveStreams?part=id&id={urllib.parse.quote(selected_stream_id)}',
+                        token=token,
+                    )
+                    if s.get('items'):
+                        stream_id = s['items'][0]['id']
+                if not stream_id:
+                    streams = _yt(
+                        '/liveStreams?part=id,snippet&mine=true&maxResults=5',
+                        token=token,
+                    )
+                    items = streams.get('items', [])
+                    if not items:
+                        self._json(400, {'error': 'No persistent stream key found. Create one in YouTube Studio first.'})
+                        return
+                    stream_id = items[0]['id']
 
                 # 3. Bind broadcast to stream
                 _yt(
