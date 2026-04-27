@@ -41,6 +41,7 @@ SETTINGS_DIR  = os.path.join(DATA_DIR, 'game-settings')
 MATCHES_FILE  = os.path.join(DATA_DIR, 'matches.json')
 TOKENS_FILE   = os.path.join(DATA_DIR, 'youtube-tokens.json')
 OBS_STATUS_FILE  = os.path.join(DATA_DIR, 'obs-status.json')
+OBS_AGENTS_FILE  = os.path.join(DATA_DIR, 'obs-agents.json')
 OBS_COMMAND_FILE = os.path.join(DATA_DIR, 'obs-command.json')
 OBS_SECRET_FILE  = os.path.join(DATA_DIR, 'obs-secret.txt')
 os.makedirs(SETTINGS_DIR, exist_ok=True)
@@ -49,9 +50,10 @@ GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 APP_BASE_URL         = os.environ.get('APP_BASE_URL', '').rstrip('/')
 
-GAME_ID_RE  = re.compile(r'^/api/game-settings/(\d{1,20})$')
-MATCH_ID_RE = re.compile(r'^/api/matches/([0-9a-f\-]{36})$')
+GAME_ID_RE   = re.compile(r'^/api/game-settings/(\d{1,20})$')
+MATCH_ID_RE  = re.compile(r'^/api/matches/([0-9a-f\-]{36})$')
 HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$')
+AGENT_ID_RE  = re.compile(r'^[a-zA-Z0-9_\-\.]{1,40}$')
 
 THUMBNAIL_MAX_BYTES = 2 * 1024 * 1024   # 2 MB
 REQUEST_MAX_BYTES   = 64 * 1024         # 64 KB for JSON bodies
@@ -226,6 +228,21 @@ def _save_obs_command(data):
     with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(data, f)
     os.replace(tmp, OBS_COMMAND_FILE)
+
+def _load_obs_agents():
+    if not os.path.exists(OBS_AGENTS_FILE):
+        return {}
+    try:
+        with open(OBS_AGENTS_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_obs_agents(data):
+    tmp = OBS_AGENTS_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    os.replace(tmp, OBS_AGENTS_FILE)
 
 def _obs_connected(status):
     updated = status.get('updatedAt')
@@ -536,16 +553,41 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/api/obs/secret':
             self._json(200, {'secret': _get_obs_secret()})
             return
-        status = _load_obs_status()
+        agents_raw = _load_obs_agents()
         command = _load_obs_command()
+
+        # Build per-agent connected map
+        agents_out = {}
+        any_connected = False
+        any_streaming = False
+        primary = {}
+        for agent_id, s in agents_raw.items():
+            connected = _obs_connected(s)
+            if connected:
+                any_connected = True
+                if s.get('streaming'):
+                    any_streaming = True
+                if not primary:
+                    primary = s
+            agents_out[agent_id] = {
+                'connected': connected,
+                'streaming': bool(s.get('streaming', False)),
+                'recording': bool(s.get('recording', False)),
+                'scene':     s.get('scene', ''),
+                'scenes':    s.get('scenes', []),
+                'agentType': s.get('agentType', ''),
+                'updatedAt': s.get('updatedAt'),
+            }
+
         self._json(200, {
-            'connected':      _obs_connected(status),
-            'streaming':      status.get('streaming', False),
-            'recording':      status.get('recording', False),
-            'scene':          status.get('scene', ''),
-            'scenes':         status.get('scenes', []),
-            'agentType':      status.get('agentType', ''),
-            'updatedAt':      status.get('updatedAt'),
+            'connected':      any_connected,
+            'streaming':      any_streaming,
+            'recording':      primary.get('recording', False),
+            'scene':          primary.get('scene', ''),
+            'scenes':         primary.get('scenes', []),
+            'agentType':      primary.get('agentType', ''),
+            'updatedAt':      primary.get('updatedAt'),
+            'agents':         agents_out,
             'pendingCommand': command if command.get('id') else None,
         })
 
@@ -555,6 +597,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             body = json.loads(self._body())
+            agent_id = str(body.get('agentId', 'obs'))[:40]
+            if not AGENT_ID_RE.match(agent_id):
+                agent_id = 'obs'
             raw_scenes = body.get('scenes', [])
             scenes = (
                 [str(s)[:200] for s in raw_scenes if isinstance(s, str)][:50]
@@ -569,12 +614,16 @@ class Handler(BaseHTTPRequestHandler):
                 'agentType': agent_type,
                 'updatedAt': _now_iso(),
             }
-            _save_obs_status(status)
+            agents = _load_obs_agents()
+            agents[agent_id] = status
+            _save_obs_agents(agents)
             ack_id = body.get('ackCommandId', '')
             command = _load_obs_command()
             if ack_id and command.get('id') == ack_id:
-                _save_obs_command({})
-                command = {}
+                target = command.get('targetAgent', '')
+                if not target or target == agent_id:
+                    _save_obs_command({})
+                    command = {}
             self._json(200, {'ok': True, 'pendingCommand': command if command.get('id') else None})
         except (json.JSONDecodeError, ValueError) as exc:
             self._json(400, {'error': str(exc)})
@@ -603,7 +652,12 @@ class Handler(BaseHTTPRequestHandler):
             match_id = str(body.get('matchId', ''))[:36].strip()
             if match_id and not re.match(r'^[0-9a-f-]{36}$', match_id):
                 match_id = ''
+            target_agent = str(body.get('targetAgent', ''))[:40].strip()
+            if target_agent and not AGENT_ID_RE.match(target_agent):
+                target_agent = ''
             cmd = {'id': str(_uuid.uuid4()), 'command': command, 'createdAt': _now_iso()}
+            if target_agent:
+                cmd['targetAgent'] = target_agent
             if broadcast_id:
                 cmd['broadcastId'] = broadcast_id
             if scene:

@@ -38,6 +38,15 @@ DEFAULT_CONFIG = {
 CHROMA_GREEN = '0x00FF00'  # must match ?chromakey=1 background in Overlay.jsx
 
 
+def _get_agent_id():
+    try:
+        with open('/etc/machine-id', encoding='utf-8') as f:
+            machine_id = f.read().strip()
+        return f'pi4-{machine_id[:8]}'
+    except Exception:
+        return 'pi4-unknown'
+
+
 def _find_chromium():
     for name in ('chromium-browser', 'chromium'):
         try:
@@ -130,6 +139,7 @@ class StreamAgent:
         self._ffmpeg_cmd_used = []
         self._overlay = OverlayRenderer()
         self._running = True
+        self._agent_id = _get_agent_id()
 
     # ── Source discovery ──────────────────────────────────────────────────────
 
@@ -357,6 +367,7 @@ class StreamAgent:
             'scene':     self.current_scene(),
             'scenes':    self.scenes(),
             'agentType': 'pi4',
+            'agentId':   self._agent_id,
         }
 
         try:
@@ -367,6 +378,10 @@ class StreamAgent:
 
         cmd = resp.get('pendingCommand')
         if not cmd or not cmd.get('id'):
+            return
+
+        target_agent = cmd.get('targetAgent', '')
+        if target_agent and target_agent != self._agent_id:
             return
 
         command = cmd.get('command', '')
@@ -412,7 +427,7 @@ class StreamAgent:
         signal.signal(signal.SIGTERM, _handle_signal)
         signal.signal(signal.SIGINT, _handle_signal)
 
-        log.info('Game Streamer Pi4 agent started')
+        log.info('Game Streamer Pi4 agent started (agentId=%s)', self._agent_id)
         log.info('App URL: %s', self.cfg['appUrl'])
         log.info('Available sources: %s', self.scenes())
         log.info('Active source: %s', self._active_source)
