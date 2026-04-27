@@ -427,8 +427,9 @@ export default function Dashboard() {
   const [selectedIds, setSelectedIds]        = useState(new Set());
   const [bulkModal, setBulkModal]            = useState(false);
   const [broadcastStatuses, setBroadcastStatuses] = useState({});
-  const [obsStatus, setObsStatus]   = useState(null);
-  const [obsLoading, setObsLoading] = useState(false);
+  const [obsStatus, setObsStatus]         = useState(null);
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
+  const [obsLoading, setObsLoading]       = useState(false);
   const obsSecretRef  = useRef('');
   const obsAbortRef   = useRef(null);
   const refreshingRef = useRef(false);
@@ -474,7 +475,16 @@ export default function Dashboard() {
       obsAbortRef.current = new AbortController();
       try {
         const r = await fetch('/api/obs/status', { signal: obsAbortRef.current.signal });
-        if (r.ok) setObsStatus(await r.json());
+        if (r.ok) {
+          const data = await r.json();
+          setObsStatus(data);
+          const connected = Object.entries(data.agents || {})
+            .filter(([, s]) => s.connected)
+            .map(([id]) => id);
+          if (connected.length > 0) {
+            setSelectedAgentId(prev => (prev && connected.includes(prev)) ? prev : connected[0]);
+          }
+        }
       } catch (e) {
         if (e.name !== 'AbortError') { /* network error, ignore */ }
       }
@@ -538,10 +548,12 @@ export default function Dashboard() {
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (obsSecretRef.current) headers['Authorization'] = `Bearer ${obsSecretRef.current}`;
+      const body = { command, ...extras };
+      if (selectedAgentId) body.targetAgent = selectedAgentId;
       await fetch('/api/obs/command', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ command, ...extras }),
+        body: JSON.stringify(body),
       });
     } catch {}
     setObsLoading(false);
@@ -607,40 +619,71 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {obsStatus && (
-        <div className={`obs-bar ${obsStatus.connected ? (obsStatus.streaming ? 'obs-bar-live' : 'obs-bar-connected') : 'obs-bar-offline'}`}>
-          <span className="obs-dot" />
-          <span className="obs-bar-label">{obsStatus.agentType === 'pi4' ? 'Pi4' : 'OBS'}</span>
-          {obsStatus.connected ? (
-            <>
-              {obsStatus.scenes?.length > 1 ? (
-                <select
-                  className="obs-scene-select"
-                  value={obsStatus.scene || ''}
-                  disabled={obsLoading}
-                  onChange={e => handleObsCommand('switch_scene', { scene: e.target.value })}
-                >
-                  {obsStatus.scenes.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              ) : (
-                <span className="obs-bar-scene">{obsStatus.scene || '—'}</span>
-              )}
-              <span className={`obs-bar-state ${obsStatus.streaming ? 'obs-state-live' : ''}`}>
-                {obsStatus.streaming ? '● Streaming' : obsStatus.recording ? '● Recording' : 'Idle'}
+      {obsStatus && (() => {
+        const connectedAgents = Object.entries(obsStatus.agents || {})
+          .filter(([, s]) => s.connected)
+          .map(([id, s]) => ({ id, ...s }));
+        const effectiveId = (selectedAgentId && connectedAgents.find(a => a.id === selectedAgentId))
+          ? selectedAgentId
+          : connectedAgents[0]?.id || null;
+        const activeAgent = effectiveId
+          ? (obsStatus.agents?.[effectiveId] || null)
+          : null;
+        const anyConnected = connectedAgents.length > 0;
+        const isStreaming = activeAgent?.streaming || false;
+        const agentLabel = (type) => type === 'pi4' ? 'Pi4' : 'OBS';
+
+        return (
+          <div className={`obs-bar ${anyConnected ? (isStreaming ? 'obs-bar-live' : 'obs-bar-connected') : 'obs-bar-offline'}`}>
+            <span className="obs-dot" />
+            {connectedAgents.length > 1 ? (
+              <span className="obs-agent-tabs">
+                {connectedAgents.map(a => (
+                  <button
+                    key={a.id}
+                    className={`obs-agent-tab ${a.id === effectiveId ? 'obs-agent-tab-active' : ''}`}
+                    onClick={() => setSelectedAgentId(a.id)}
+                  >
+                    {agentLabel(a.agentType)}
+                  </button>
+                ))}
               </span>
-            </>
-          ) : (
-            <span className="obs-bar-state">Not connected — open OBS with the script loaded</span>
-          )}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-            {obsStatus.connected && obsStatus.streaming && (
-              <button className="btn btn-sm btn-danger" disabled={obsLoading} onClick={() => handleObsCommand('stop_streaming')}>
-                ⏹ Stop Stream
-              </button>
+            ) : (
+              <span className="obs-bar-label">
+                {anyConnected ? agentLabel(activeAgent?.agentType) : 'Streamer'}
+              </span>
             )}
+            {anyConnected && activeAgent ? (
+              <>
+                {activeAgent.scenes?.length > 1 ? (
+                  <select
+                    className="obs-scene-select"
+                    value={activeAgent.scene || ''}
+                    disabled={obsLoading}
+                    onChange={e => handleObsCommand('switch_scene', { scene: e.target.value })}
+                  >
+                    {activeAgent.scenes.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                ) : (
+                  <span className="obs-bar-scene">{activeAgent.scene || '—'}</span>
+                )}
+                <span className={`obs-bar-state ${isStreaming ? 'obs-state-live' : ''}`}>
+                  {isStreaming ? '● Streaming' : activeAgent.recording ? '● Recording' : 'Idle'}
+                </span>
+              </>
+            ) : (
+              <span className="obs-bar-state">Not connected — open OBS with the script loaded, or start the Pi4 agent</span>
+            )}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+              {anyConnected && isStreaming && (
+                <button className="btn btn-sm btn-danger" disabled={obsLoading} onClick={() => handleObsCommand('stop_streaming')}>
+                  ⏹ Stop Stream
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {matches.length === 0 ? (
         <div className="empty-state">
@@ -664,8 +707,12 @@ export default function Dashboard() {
               onToggleSelect={handleToggleSelect}
               broadcastStatus={m.broadcastId ? (broadcastStatuses[m.broadcastId] || null) : null}
               onTransition={handleTransition}
-              obsConnected={obsStatus?.connected || false}
-              obsStreaming={obsStatus?.streaming || false}
+              obsConnected={Object.values(obsStatus?.agents || {}).some(s => s.connected)}
+              obsStreaming={(() => {
+                const agents = obsStatus?.agents || {};
+                const eff = (selectedAgentId && agents[selectedAgentId]?.connected) ? selectedAgentId : Object.keys(agents).find(id => agents[id].connected);
+                return agents[eff]?.streaming || false;
+              })()}
               obsLoading={obsLoading}
               onObsStart={(broadcastId) => handleObsCommand('start_streaming', { broadcastId, matchId: m.id })}
             />

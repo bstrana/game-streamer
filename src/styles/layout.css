@@ -268,6 +268,27 @@
 .obs-bar-scene { color: var(--text); font-weight: 600; }
 .obs-bar-state { color: var(--text-muted); }
 .obs-state-live { color: var(--danger); font-weight: 600; }
+
+.obs-agent-tabs { display: flex; gap: 4px; }
+.obs-agent-tab {
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.obs-agent-tab:hover { background: var(--bg); color: var(--text); }
+.obs-agent-tab-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
 .obs-scene-select {
   background: var(--bg);
   color: var(--text);

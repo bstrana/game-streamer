@@ -372,7 +372,7 @@ local function poll_streaming_control()
   end
 
   local body = string.format(
-    '{"streaming":%s,"recording":%s,"scene":"%s","scenes":[%s]%s}',
+    '{"streaming":%s,"recording":%s,"scene":"%s","scenes":[%s],"agentId":"obs","agentType":"obs"%s}',
     streaming and "true" or "false",
     recording and "true" or "false",
     scene,
@@ -387,13 +387,16 @@ local function poll_streaming_control()
   if not resp or resp == "" then return end
 
   -- Parse pendingCommand from response (minimal JSON extraction)
-  local cmd_id    = resp:match('"id"%s*:%s*"([^"]+)"')
-  local cmd_name  = resp:match('"command"%s*:%s*"([^"]+)"')
-  local cmd_bid   = resp:match('"broadcastId"%s*:%s*"([^"]+)"') or ""
-  local cmd_scene = resp:match('"scene"%s*:%s*"([^"]+)"') or ""
+  local cmd_id     = resp:match('"id"%s*:%s*"([^"]+)"')
+  local cmd_name   = resp:match('"command"%s*:%s*"([^"]+)"')
+  local cmd_bid    = resp:match('"broadcastId"%s*:%s*"([^"]+)"') or ""
+  local cmd_scene  = resp:match('"scene"%s*:%s*"([^"]+)"') or ""
+  local cmd_target = resp:match('"targetAgent"%s*:%s*"([^"]*)"') or ""
   if cmd_id and cmd_name and cmd_id ~= "" then
-    execute_command(cmd_name, cmd_bid, cmd_scene)
-    last_ack_id = cmd_id
+    if cmd_target == "" or cmd_target == "obs" then
+      execute_command(cmd_name, cmd_bid, cmd_scene)
+      last_ack_id = cmd_id
+    end
   end
 end
 
