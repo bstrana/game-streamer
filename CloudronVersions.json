@@ -1260,6 +1260,34 @@
       "creationDate": "Mon, 27 Apr 2026 16:00:00 GMT",
       "ts": "Mon, 27 Apr 2026 16:00:00 GMT",
       "publishState": "published"
+    },
+    "1.9.1": {
+      "manifest": {
+        "id": "io.github.bstrana.game-streamer",
+        "title": "Game Streamer",
+        "author": "bstrana",
+        "description": "Baseball game live display overlay manager for OBS streaming. Manage matches and generate transparent scoreboard overlays powered by WBSC live data.",
+        "tagline": "Baseball scoreboard overlay for OBS streaming",
+        "version": "1.9.1",
+        "manifestVersion": 2,
+        "minBoxVersion": "9.1.0",
+        "website": "https://github.com/bstrana/game-streamer",
+        "contactEmail": "support@example.com",
+        "healthCheckPath": "/health",
+        "httpPort": 8000,
+        "dockerImage": "ghcr.io/bstrana/game-streamer:1.9.1",
+        "addons": { "localstorage": {}, "keycloak": {} },
+        "icon": "file://appicon.png",
+        "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
+        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
+        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "changelog": "Fix Keycloak authentication: add keycloak addon so Cloudron auto-injects KEYCLOAK_URL; start.sh resolves URL from config.env > Cloudron addon > localhost and logs it on startup.",
+        "packagerName": "bstrana",
+        "packagerUrl": "https://github.com/bstrana"
+      },
+      "creationDate": "Thu, 22 May 2026 10:00:00 GMT",
+      "ts": "Thu, 22 May 2026 10:00:00 GMT",
+      "publishState": "published"
     }
   }
 }

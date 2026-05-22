@@ -39,12 +39,22 @@ if [ -f /app/data/config.env ]; then
   rm -f "$_cfg"
 fi
 
+# ── Resolve effective Keycloak settings ───────────────────────────────────
+# Priority: config.env (loaded above) > Cloudron keycloak addon > localhost default
+KEYCLOAK_URL="${KEYCLOAK_URL:-${CLOUDRON_KEYCLOAK_URL:-http://localhost:8080}}"
+KEYCLOAK_REALM="${KEYCLOAK_REALM:-${CLOUDRON_KEYCLOAK_REALM:-game-streamer}}"
+KEYCLOAK_CLIENT_ID="${KEYCLOAK_CLIENT_ID:-${CLOUDRON_KEYCLOAK_CLIENT_ID:-game-streamer-app}}"
+
+echo "[start.sh] Keycloak URL:    ${KEYCLOAK_URL}"
+echo "[start.sh] Keycloak realm:  ${KEYCLOAK_REALM}"
+echo "[start.sh] Keycloak client: ${KEYCLOAK_CLIENT_ID}"
+
 # ── Runtime config (read by the SPA via window.__APP_CONFIG__) ────────────
 cat > /tmp/config.js << EOF
 window.__APP_CONFIG__ = {
-  keycloakUrl:      "${KEYCLOAK_URL:-http://localhost:8080}",
-  keycloakRealm:    "${KEYCLOAK_REALM:-game-streamer}",
-  keycloakClientId: "${KEYCLOAK_CLIENT_ID:-game-streamer-app}",
+  keycloakUrl:      "${KEYCLOAK_URL}",
+  keycloakRealm:    "${KEYCLOAK_REALM}",
+  keycloakClientId: "${KEYCLOAK_CLIENT_ID}",
   appBaseUrl:       "${APP_BASE_URL:-}"
 };
 EOF
