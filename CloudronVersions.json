@@ -16,18 +16,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Add environment variable configuration for Keycloak and app URL via Cloudron Configure panel.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Tue, 14 Apr 2026 14:00:00 GMT",
       "ts": "Tue, 14 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.0"
     },
     "1.0.2": {
       "manifest": {
@@ -44,18 +55,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.2",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Load runtime config from /app/data/config.env on startup; a sample file is written on first boot.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Tue, 14 Apr 2026 16:00:00 GMT",
       "ts": "Tue, 14 Apr 2026 16:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.2"
     },
     "1.0.3": {
       "manifest": {
@@ -72,18 +94,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.3",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Proxy WBSC game data through nginx to fix CORS; load runtime config from /app/data/config.env.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Tue, 14 Apr 2026 18:00:00 GMT",
       "ts": "Tue, 14 Apr 2026 18:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.3"
     },
     "1.0.4": {
       "manifest": {
@@ -100,18 +133,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.4",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Fix RangeError crash on invalid match date values.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Tue, 14 Apr 2026 20:00:00 GMT",
       "ts": "Tue, 14 Apr 2026 20:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.4"
     },
     "1.0.5": {
       "manifest": {
@@ -128,18 +172,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.5",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Redesign scoreboard overlay to broadcast style with stacked team rows, inning arrow, count dots, and live indicator.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Tue, 14 Apr 2026 22:00:00 GMT",
       "ts": "Tue, 14 Apr 2026 22:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.5"
     },
     "1.0.6": {
       "manifest": {
@@ -156,18 +211,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.6",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Scoreboard top-left position; B/S as numbers, outs as dots; updated base runner SVG graphic.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 00:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 00:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.6"
     },
     "1.0.7": {
       "manifest": {
@@ -184,18 +250,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.7",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Poll live data via latest.json + play{id}.json every 5 seconds; fix QEMU arm64 build crash.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 02:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 02:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.7"
     },
     "1.0.8": {
       "manifest": {
@@ -212,18 +289,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.8",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Read team names from eventaway/eventhome keys; parse situation and linescore exclusively for live data.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 04:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 04:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.8"
     },
     "1.0.9": {
       "manifest": {
@@ -240,18 +328,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.9",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Fix latest.json bare-number parsing; show actual fetch error in overlay banner.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 06:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 06:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.0.9"
     },
     "1.1.0": {
       "manifest": {
@@ -268,18 +367,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Color pickers in match settings; primary color as team badge; diamond always visible; remove PRE label; center scores; pitcher top bar and batter bottom bar with avg.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 08:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 08:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.0"
     },
     "1.1.1": {
       "manifest": {
@@ -296,18 +406,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.1",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Add Replay mode: steps through play1→latest at 3 s/play; toggle in match settings; REPLAY badge shown on overlay instead of LIVE.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Add Replay mode: steps through play1\u2192latest at 3 s/play; toggle in match settings; REPLAY badge shown on overlay instead of LIVE.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 10:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.1"
     },
     "1.1.2": {
       "manifest": {
@@ -324,18 +445,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.2",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Per-team gradient colors: away and home each have primary+secondary; badge renders as diagonal gradient; color preview swatch in settings.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 12:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 12:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.2"
     },
     "1.1.3": {
       "manifest": {
@@ -352,18 +484,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.3",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Bigger B/S count; diamond beside count; pitcher/batter bars visible in replay; full team row colored with gradient; error banner suppressed while data is present.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 14:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.3"
     },
     "1.1.4": {
       "manifest": {
@@ -380,18 +523,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.4",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Remove jersey numbers; pitcher bar shows pitch count (situation.pitches); overlay background white; per-team gradient row colors.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 16:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 16:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.4"
     },
     "1.1.5": {
       "manifest": {
@@ -408,18 +562,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.5",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Per-team logo URL in match settings; logo shown in overlay team rows; replay play description (playdata[0].n) in batter bar.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 18:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 18:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.5"
     },
     "1.1.6": {
       "manifest": {
@@ -436,18 +601,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.6",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Replay mode uses 4-column inline layout: away team+score, home team+score, status/inning/count/outs, bases diamond.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 20:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 20:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.6"
     },
     "1.1.7": {
       "manifest": {
@@ -464,18 +640,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.7",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Replay inline layout: horizontal team cols (logo+abbr+score), two-row status col (REPLAY+B·S / inning+outs), zero top/bottom padding.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Replay inline layout: horizontal team cols (logo+abbr+score), two-row status col (REPLAY+B\u00b7S / inning+outs), zero top/bottom padding.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Wed, 15 Apr 2026 22:00:00 GMT",
       "ts": "Wed, 15 Apr 2026 22:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.7"
     },
     "1.1.8": {
       "manifest": {
@@ -492,18 +679,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.8",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Replay status column: REPLAY label on row 1; inning, outs dots, B·S count on row 2.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Replay status column: REPLAY label on row 1; inning, outs dots, B\u00b7S count on row 2.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 00:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 00:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.8"
     },
     "1.1.9": {
       "manifest": {
@@ -520,18 +718,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.9",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Direct overlay URL /overlay/game/:gameId — no match setup needed, team config via query params; OBS Lua script to auto-create Browser Source; right-align player names; broader pitch count key fallbacks.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Direct overlay URL /overlay/game/:gameId \u2014 no match setup needed, team config via query params; OBS Lua script to auto-create Browser Source; right-align player names; broader pitch count key fallbacks.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 02:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 02:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.1.9"
     },
     "1.2.0": {
       "manifest": {
@@ -548,18 +757,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Fix pitcher pitch count: read PITCHES from raw.boxscore[pitcherid]; right-align player names in bars.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 04:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 04:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.0"
     },
     "1.2.1": {
       "manifest": {
@@ -576,18 +796,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.1",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Fix overlay showing login screen: switch Keycloak onLoad to check-sso so public overlay URLs load without auth redirect.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 06:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 06:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.1"
     },
     "1.2.2": {
       "manifest": {
@@ -604,18 +835,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.2",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "OBS Lua script: add away/home logo URL inputs; transparent overlay background for OBS browser source.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 08:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 08:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.2"
     },
     "1.2.3": {
       "manifest": {
@@ -632,18 +874,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.3",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Two-tone scoreboard: near-black outer frame with dark-navy inner panel; OBS script Tools menu item and LuaJIT bitwise fix.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 10:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.3"
     },
     "1.2.4": {
       "manifest": {
@@ -660,18 +913,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.4",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Fix OBS transparent background: override global body background in overlay.css so browser source renders with no background.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 12:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 12:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.4"
     },
     "1.2.5": {
       "manifest": {
@@ -688,18 +952,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.5",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "OBS script: local file picker for team logos, default browser source height 240, Tools menu item deferred to after OBS frontend load; overlay scoreboard team logo enlarged to 52px and abbreviation font to 24px.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 14:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.5"
     },
     "1.2.6": {
       "manifest": {
@@ -716,18 +991,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.6",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Server-side game settings API: app auto-pushes match settings on save; OBS script fetches team names, colours, and logos by game ID with one click. Fix OBS colour channel swap (R/B were inverted in overlay).",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 16:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 16:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.6"
     },
     "1.2.7": {
       "manifest": {
@@ -744,18 +1030,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.7",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Compact dashboard cards with inline date/time, location and game ID chips; games sorted newest first; duplicate match option.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 16 Apr 2026 18:00:00 GMT",
       "ts": "Thu, 16 Apr 2026 18:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.7"
     },
     "1.2.8": {
       "manifest": {
@@ -772,18 +1069,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.8",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "YouTube live stream scheduling: connect Google account, schedule broadcasts from match cards, broadcast URL stored per match.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Fri, 17 Apr 2026 10:00:00 GMT",
       "ts": "Fri, 17 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.8"
     },
     "1.2.9": {
       "manifest": {
@@ -800,18 +1108,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.9",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Schedule modal: description auto-filled from all match data (competition, date, location, game ID, logos); optional thumbnail URL uploaded to broadcast.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Fri, 17 Apr 2026 14:00:00 GMT",
       "ts": "Fri, 17 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.2.9"
     },
     "1.3.0": {
       "manifest": {
@@ -828,18 +1147,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.3.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Import from Schedule: paste a schedule JSON, filter by location or home team, select games, and bulk-import them as matches.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Fri, 17 Apr 2026 18:00:00 GMT",
       "ts": "Fri, 17 Apr 2026 18:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.3.0"
     },
     "1.4.0": {
       "manifest": {
@@ -856,18 +1186,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.4.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Persistent server-side match storage in /app/data/matches.json; OBS overlay now works correctly and polls for live edits every 10 s.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Fri, 17 Apr 2026 20:00:00 GMT",
       "ts": "Fri, 17 Apr 2026 20:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.4.0"
     },
     "1.5.0": {
       "manifest": {
@@ -884,18 +1225,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.5.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Mobile-first redesign with bottom tab bar and PWA support; security hardening (SSRF fix, input validation, exception hardening).",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sat, 18 Apr 2026 10:00:00 GMT",
       "ts": "Sat, 18 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.5.0"
     },
     "1.6.0": {
       "manifest": {
@@ -912,18 +1264,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.6.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Bulk YouTube scheduling with live progress; today's matches pinned to top with green accent and TODAY badge.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sat, 18 Apr 2026 14:00:00 GMT",
       "ts": "Sat, 18 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.6.0"
     },
     "1.7.0": {
       "manifest": {
@@ -940,18 +1303,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.7.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "YouTube broadcast status display (LIVE/Preview/Ended chips), Go Live/End Stream buttons, concurrent viewer count; OBS streaming control via Lua heartbeat — Start/Stop stream from the dashboard.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "YouTube broadcast status display (LIVE/Preview/Ended chips), Go Live/End Stream buttons, concurrent viewer count; OBS streaming control via Lua heartbeat \u2014 Start/Stop stream from the dashboard.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 19 Apr 2026 10:00:00 GMT",
       "ts": "Sun, 19 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.7.0"
     },
     "1.8.0": {
       "manifest": {
@@ -968,18 +1342,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Per-match ▶ Stream button targets OBS to the specific YouTube broadcast on each match card; broadcast_id set on OBS YouTube service before stream starts via Lua heartbeat.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Per-match \u25b6 Stream button targets OBS to the specific YouTube broadcast on each match card; broadcast_id set on OBS YouTube service before stream starts via Lua heartbeat.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 19 Apr 2026 14:00:00 GMT",
       "ts": "Sun, 19 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.0"
     },
     "1.8.1": {
       "manifest": {
@@ -996,18 +1381,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.1",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Security hardening: OBS API secret auth, CORS locked to app origin, SSRF blocklist, nginx rate limiting, Lua URL/shell-injection guard; match cards sorted ascending (next game first).",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 19 Apr 2026 18:00:00 GMT",
       "ts": "Sun, 19 Apr 2026 18:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.1"
     },
     "1.8.2": {
       "manifest": {
@@ -1024,18 +1420,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.2",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Scene switcher in OBS bar — select any OBS scene from the dashboard; delete match now offers to also delete its YouTube broadcast.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Scene switcher in OBS bar \u2014 select any OBS scene from the dashboard; delete match now offers to also delete its YouTube broadcast.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Mon, 20 Apr 2026 08:00:00 GMT",
       "ts": "Mon, 20 Apr 2026 08:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.2"
     },
     "1.8.3": {
       "manifest": {
@@ -1052,18 +1459,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.3",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Raspberry Pi 4 streaming agent — run at the field with USB or IP cam, controlled from the dashboard; RTMP URL auto-fetched from YouTube on stream start.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Raspberry Pi 4 streaming agent \u2014 run at the field with USB or IP cam, controlled from the dashboard; RTMP URL auto-fetched from YouTube on stream start.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 26 Apr 2026 10:00:00 GMT",
       "ts": "Sun, 26 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.3"
     },
     "1.8.4": {
       "manifest": {
@@ -1080,18 +1498,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.4",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Stream button now visible on match cards whenever a YouTube broadcast is scheduled, disabled with tooltip when no agent is connected.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 26 Apr 2026 10:30:00 GMT",
       "ts": "Sun, 26 Apr 2026 10:30:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.4"
     },
     "1.8.5": {
       "manifest": {
@@ -1108,18 +1537,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.5",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Pi4 agent setup fixes: filter V4L2 capture devices only, fix setup.sh GitHub download when run standalone.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 26 Apr 2026 11:00:00 GMT",
       "ts": "Sun, 26 Apr 2026 11:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.5"
     },
     "1.8.6": {
       "manifest": {
@@ -1136,18 +1576,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.6",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Stream button shows on all match cards when agent is connected; falls back to persistent YouTube stream key when no broadcast is scheduled.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 26 Apr 2026 12:00:00 GMT",
       "ts": "Sun, 26 Apr 2026 12:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.6"
     },
     "1.8.7": {
       "manifest": {
@@ -1164,18 +1615,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.7",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Pi4 streaming working: libx264 transcode with silent audio track, correct input ordering and thread buffering for stable RTSP to YouTube RTMP.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Sun, 26 Apr 2026 14:00:00 GMT",
       "ts": "Sun, 26 Apr 2026 14:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.7"
     },
     "1.8.8": {
       "manifest": {
@@ -1192,18 +1654,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.8",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Multi-agent support: OBS and Pi4 can both connect simultaneously; dashboard shows agent selector tabs to choose which one receives stream commands.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Mon, 27 Apr 2026 10:00:00 GMT",
       "ts": "Mon, 27 Apr 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.8"
     },
     "1.8.9": {
       "manifest": {
@@ -1220,18 +1693,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.9",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Auto-start and auto-end on broadcast scheduling; stream key picker in YouTube Settings to choose which persistent key to use.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Mon, 27 Apr 2026 12:00:00 GMT",
       "ts": "Mon, 27 Apr 2026 12:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.8.9"
     },
     "1.9.0": {
       "manifest": {
@@ -1248,18 +1732,29 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.9.0",
-        "addons": { "localstorage": {} },
+        "addons": {
+          "localstorage": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
-        "changelog": "Fix agent switching: pendingCommand filtered server-side per agent so OBS never intercepts Pi4-targeted commands — switching between OBS and Pi4 now works without updating the OBS Lua script.",
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
+        "changelog": "Fix agent switching: pendingCommand filtered server-side per agent so OBS never intercepts Pi4-targeted commands \u2014 switching between OBS and Pi4 now works without updating the OBS Lua script.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Mon, 27 Apr 2026 16:00:00 GMT",
       "ts": "Mon, 27 Apr 2026 16:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.9.0"
     },
     "1.9.1": {
       "manifest": {
@@ -1276,18 +1771,30 @@
         "healthCheckPath": "/health",
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.9.1",
-        "addons": { "localstorage": {}, "keycloak": {} },
+        "addons": {
+          "localstorage": {},
+          "keycloak": {}
+        },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
-        "tags": ["sports", "baseball", "obs", "streaming", "overlay"],
-        "mediaLinks": ["https://bstrana.sirv.com/ybc/ybc-logo.png"],
+        "tags": [
+          "sports",
+          "baseball",
+          "obs",
+          "streaming",
+          "overlay"
+        ],
+        "mediaLinks": [
+          "https://bstrana.sirv.com/ybc/ybc-logo.png"
+        ],
         "changelog": "Fix Keycloak authentication: add keycloak addon so Cloudron auto-injects KEYCLOAK_URL; start.sh resolves URL from config.env > Cloudron addon > localhost and logs it on startup.",
         "packagerName": "bstrana",
         "packagerUrl": "https://github.com/bstrana"
       },
       "creationDate": "Thu, 22 May 2026 10:00:00 GMT",
       "ts": "Thu, 22 May 2026 10:00:00 GMT",
-      "publishState": "published"
+      "publishState": "published",
+      "dockerImage": "ghcr.io/bstrana/game-streamer:1.9.1"
     }
   }
 }
