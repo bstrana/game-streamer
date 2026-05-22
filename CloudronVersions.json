@@ -1772,8 +1772,7 @@
         "httpPort": 8000,
         "dockerImage": "ghcr.io/bstrana/game-streamer:1.9.1",
         "addons": {
-          "localstorage": {},
-          "keycloak": {}
+          "localstorage": {}
         },
         "icon": "file://appicon.png",
         "iconUrl": "https://bstrana.sirv.com/ybc/ybc-logo.png",
