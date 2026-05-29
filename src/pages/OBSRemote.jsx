@@ -28,6 +28,7 @@ export default function OBSRemote() {
   const [host, setHost]         = useState(() => localStorage.getItem('obs-ws-host') ?? 'localhost');
   const [port, setPort]         = useState(() => localStorage.getItem('obs-ws-port') ?? '4455');
   const [password, setPassword] = useState(() => localStorage.getItem('obs-ws-pass') ?? '');
+  const [secure, setSecure]     = useState(() => localStorage.getItem('obs-ws-secure') === 'true');
 
   const [connState, setConnState] = useState('idle'); // idle | connecting | connected | error
   const [obsVersion, setObsVersion] = useState('');
@@ -107,10 +108,12 @@ export default function OBSRemote() {
     try {
       localStorage.setItem('obs-ws-host', trimHost);
       localStorage.setItem('obs-ws-port', String(portNum));
+      localStorage.setItem('obs-ws-secure', String(secure));
       password ? localStorage.setItem('obs-ws-pass', password) : localStorage.removeItem('obs-ws-pass');
     } catch {}
 
-    const sock = new WebSocket(`ws://${trimHost}:${portNum}`);
+    const proto = secure ? 'wss' : 'ws';
+    const sock = new WebSocket(`${proto}://${trimHost}:${portNum}`);
     wsRef.current = sock;
     const send = makeSend(sock);
     sendRef.current = send;
@@ -191,10 +194,11 @@ export default function OBSRemote() {
 
     sock.onerror = () => {
       setConnState('error');
-      setConnError(
-        `Could not connect to ws://${host}:${port}. ` +
-        'Make sure OBS is running and WebSocket server is enabled: Tools → WebSocket Server Settings.',
-      );
+      const url = `${proto}://${trimHost}:${portNum}`;
+      const hint = secure
+        ? 'For wss:// enable "Enable TLS" in OBS → Tools → WebSocket Server Settings and trust the certificate.'
+        : 'If the app is on HTTPS, the browser blocks ws:// — enable TLS in OBS and switch to wss://.';
+      setConnError(`Could not connect to ${url}. Make sure OBS is running and WebSocket server is enabled (Tools → WebSocket Server Settings). ${hint}`);
       stopPoll();
     };
 
@@ -269,7 +273,33 @@ export default function OBSRemote() {
           WebSocket Connection
         </h2>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: '2 1 150px' }}>
+          <div style={{ flex: '0 0 auto' }}>
+            <label className="form-label">Protocol</label>
+            <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+              {['ws', 'wss'].map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setSecure(p === 'wss')}
+                  disabled={connected || connState === 'connecting'}
+                  style={{
+                    padding: '7px 14px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily: 'var(--mono)',
+                    border: 'none',
+                    cursor: connected || connState === 'connecting' ? 'not-allowed' : 'pointer',
+                    background: (p === 'wss') === secure ? 'var(--accent)' : 'var(--bg)',
+                    color:      (p === 'wss') === secure ? '#fff' : 'var(--text-muted)',
+                    transition: 'background .12s, color .12s',
+                  }}
+                >
+                  {p}://
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ flex: '2 1 140px' }}>
             <label className="form-label">Host</label>
             <input
               className="form-input"
@@ -280,7 +310,7 @@ export default function OBSRemote() {
               placeholder="localhost"
             />
           </div>
-          <div style={{ flex: '1 1 80px' }}>
+          <div style={{ flex: '1 1 75px' }}>
             <label className="form-label">Port</label>
             <input
               className="form-input"
@@ -291,7 +321,7 @@ export default function OBSRemote() {
               placeholder="4455"
             />
           </div>
-          <div style={{ flex: '2 1 150px' }}>
+          <div style={{ flex: '2 1 140px' }}>
             <label className="form-label">Password</label>
             <input
               className="form-input"
@@ -313,6 +343,12 @@ export default function OBSRemote() {
             )}
           </div>
         </div>
+        {!secure && window.location.protocol === 'https:' && (
+          <p style={{ color: 'var(--warn)', fontSize: 12, marginTop: 10, lineHeight: 1.5 }}>
+            <strong>Note:</strong> This page is served over HTTPS, so browsers will block <code>ws://</code> connections (mixed content).
+            Switch to <strong>wss://</strong> and enable TLS in OBS: <em>Tools → WebSocket Server Settings → Enable TLS</em>.
+          </p>
+        )}
         {connError && (
           <p style={{ color: 'var(--danger)', fontSize: 13, marginTop: 12, lineHeight: 1.6 }}>{connError}</p>
         )}
