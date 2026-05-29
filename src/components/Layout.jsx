@@ -30,10 +30,22 @@ function IconYouTube() {
   );
 }
 
+function IconOBS() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <path d="M8 21h8"/>
+      <path d="M12 17v4"/>
+      <circle cx="12" cy="10" r="3" fill="currentColor" stroke="none" opacity=".4"/>
+    </svg>
+  );
+}
+
 const NAV = [
   { to: '/',                label: 'Matches', Icon: IconMatches,  exact: true },
   { to: '/import',          label: 'Import',  Icon: IconImport,   exact: false },
   { to: '/settings/youtube',label: 'YouTube', Icon: IconYouTube,  exact: false },
+  { to: '/obs-remote',      label: 'OBS',     Icon: IconOBS,      exact: false },
 ];
 
 export default function Layout({ children }) {

@@ -607,6 +607,13 @@ class Handler(BaseHTTPRequestHandler):
                 'updatedAt': s.get('updatedAt'),
             }
 
+        # Strip rtmpUrl from the command before sending to the dashboard —
+        # it contains the YouTube stream key and this endpoint is unauthenticated.
+        # Agents receive the full command (including rtmpUrl) via PUT /api/obs/status.
+        safe_command = None
+        if command.get('id'):
+            safe_command = {k: v for k, v in command.items() if k != 'rtmpUrl'}
+
         self._json(200, {
             'connected':      any_connected,
             'streaming':      any_streaming,
@@ -616,7 +623,7 @@ class Handler(BaseHTTPRequestHandler):
             'agentType':      primary.get('agentType', ''),
             'updatedAt':      primary.get('updatedAt'),
             'agents':         agents_out,
-            'pendingCommand': command if command.get('id') else None,
+            'pendingCommand': safe_command,
         })
 
     def _obs_put(self):
