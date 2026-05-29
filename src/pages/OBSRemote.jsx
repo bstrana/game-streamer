@@ -79,6 +79,18 @@ export default function OBSRemote() {
   }
 
   function connect() {
+    // Validate host and port before opening a socket
+    const trimHost = host.trim();
+    const portNum  = parseInt(port, 10);
+    if (!trimHost || /[^a-zA-Z0-9.\-_[\]:]/.test(trimHost)) {
+      setConnError('Invalid host. Use a hostname or IP address (e.g. localhost, 192.168.1.5).');
+      return;
+    }
+    if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+      setConnError('Invalid port. Must be a number between 1 and 65535.');
+      return;
+    }
+
     if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
     stopPoll();
     setConnState('connecting');
@@ -93,12 +105,12 @@ export default function OBSRemote() {
     setRecordTime('');
 
     try {
-      localStorage.setItem('obs-ws-host', host);
-      localStorage.setItem('obs-ws-port', port);
+      localStorage.setItem('obs-ws-host', trimHost);
+      localStorage.setItem('obs-ws-port', String(portNum));
       password ? localStorage.setItem('obs-ws-pass', password) : localStorage.removeItem('obs-ws-pass');
     } catch {}
 
-    const sock = new WebSocket(`ws://${host}:${port}`);
+    const sock = new WebSocket(`ws://${trimHost}:${portNum}`);
     wsRef.current = sock;
     const send = makeSend(sock);
     sendRef.current = send;
