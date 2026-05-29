@@ -8,6 +8,7 @@ import OverlayDirect from './pages/OverlayDirect';
 import YouTubeSettings from './pages/YouTubeSettings';
 import YouTubeCallback from './pages/YouTubeCallback';
 import ImportSchedule from './pages/ImportSchedule';
+import OBSRemote from './pages/OBSRemote';
 
 function LoadingScreen() {
   return (
@@ -52,6 +53,7 @@ function AppRoutes() {
           <Route path="/match/:id/edit" element={<MatchEdit />} />
           <Route path="/settings/youtube" element={<YouTubeSettings />} />
           <Route path="/import" element={<ImportSchedule />} />
+          <Route path="/obs-remote" element={<OBSRemote />} />
         </Route>
 
         {/* Catch-all */}
